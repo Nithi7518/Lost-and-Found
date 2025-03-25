@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lost and Found - Items</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="logo" onclick="window.location.href='home.html'">
+        LOST & FOUND
+      </div>
+      <div class="nav-profile-container">
+        <nav>
+          <a href="home.html">Home</a>
+          <a href="post.html">Post Item</a>
+          <a href="lost.html">Lost Item</a>
+        </nav>
+        <img src="images/profile-pic.png" alt="profile" class="user-pic" />
+        <div class="sub-menu-wrap">
+          <div class="sub-menu">
+            <div class="user-info">
+              <img src="images/profile-pic.png" />
+              <h3>Tilak</h3>
+            </div>
+            <hr />
+            <a href="#" class="sub-menu-link">
+              <img src="images/profile.png" />
+              <p>Edit Profile</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/settings.png" />
+              <p>Settings</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/logout.png" />
+              <p>Logout</p>
+              <span>></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <h2>Found Items</h2>
+      <form class="search-bar" role="search">
+        <input type="text" id="search-input" placeholder="Search items..." />
+        <button type="submit">Search</button>
+      </form>
+
+      <div id="item-not-found">
+        <p>
+          If your lost item is not available below
+          <a href="post_lost.html">click here</a>
+        </p>
+      </div>
+
+      <div class="items-container">
+        <div class="item-card">
+          <img src="images/wallet.png" alt="Found Wallet" />
+          <h3>Found Wallet</h3>
+          <p>Category: Bags/Wallets</p>
+          <p>Location: City Street Bench</p>
+          <p>Date: 2025-02-26</p>
+          <p>Time: 14:30</p>
+        </div>
+        <div class="item-card">
+          <img src="images/keys.png" alt="Found Keys" />
+          <h3>Found Keys</h3>
+          <p>Category: Keys</p>
+          <p>Location: Park</p>
+          <p>Date: 2025-02-25</p>
+          <p>Time: 10:15</p>
+        </div>
+        <div class="item-card">
+          <img src="images/phone.png" alt="Found Smartphone" />
+          <h3>Found Smartphone</h3>
+          <p>Category: Electronics</p>
+          <p>Location: Cafeteria</p>
+          <p>Date: 2025-02-24</p>
+          <p>Time: 12:45</p>
+        </div>
+        <div class="item-card">
+          <img src="images/glasses.png" alt="Found Eyeglasses" />
+          <h3>Found Eyeglasses</h3>
+          <p>Category: Eyewear</p>
+          <p>Location: Library</p>
+          <p>Date: 2025-02-23</p>
+          <p>Time: 16:20</p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const userPic = document.querySelector(".user-pic");
+      const subMenuWrap = document.querySelector(".sub-menu-wrap");
+
+      userPic.addEventListener("click", () => {
+        subMenuWrap.classList.toggle("open"); // Toggle the "open" class
+      });
+    </script>
+  </body>
+</html>

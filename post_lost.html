@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lost and Found - Post Item</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="logo" onclick="window.location.href='home.html'">
+        LOST & FOUND
+      </div>
+      <div class="nav-profile-container">
+        <nav>
+          <a href="home.html">Home</a>
+          <a href="items.html">Found Item</a>
+          <a href="post.html">Post Item</a>
+          <a href="lost.html">Lost Item</a>
+        </nav>
+        <img src="images/profile-pic.png" alt="profile" class="user-pic" />
+        <div class="sub-menu-wrap">
+          <div class="sub-menu">
+            <div class="user-info">
+              <img src="images/profile-pic.png" />
+              <h3>Tilak</h3>
+            </div>
+            <hr />
+            <a href="#" class="sub-menu-link">
+              <img src="images/profile.png" />
+              <p>Edit Profile</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/settings.png" />
+              <p>Settings</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/logout.png" />
+              <p>Logout</p>
+              <span>></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="post-item">
+      <h2>Post Lost Item</h2>
+      <form id="post-form">
+        <label for="name">Item Name:</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Enter item name"
+          required
+          minlength="3"
+          maxlength="50"
+        />
+
+        <label for="category">Item Category:</label>
+        <select id="category" name="category" required>
+          <option value="">Select a category</option>
+          <option value="electronics">Electronics</option>
+          <option value="personal_belongings">Personal Belongings</option>
+          <option value="documents">Documents/Cards</option>
+          <option value="clothing">Clothing</option>
+          <option value="accessories">Accessories</option>
+          <option value="keys">Keys</option>
+          <option value="bags">Bags/Wallets</option>
+          <option value="jewelry">Jewelry</option>
+          <option value="eyewear">Eyewear</option>
+          <option value="other">Other</option>
+        </select>
+
+        <label for="description">Description:</label>
+        <textarea
+          id="description"
+          name="description"
+          placeholder="Provide a brief description..."
+          rows="4"
+          required
+          minlength="10"
+          maxlength="500"
+        ></textarea>
+
+        <label for="date-lost">Date Lost:</label>
+        <input type="date" id="date-lost" name="date-lost" required max="" />
+
+        <label for="time-lost">Time Lost:</label>
+        <input type="time" id="time-lost" name="time-lost" required />
+
+        <label for="location">Location Lost:</label>
+        <input
+          type="text"
+          id="location"
+          name="location"
+          placeholder="Enter location where item was lost"
+          required
+          minlength="5"
+          maxlength="100"
+        />
+
+        <label for="image">Upload Image:</label>
+        <input type="file" id="image" name="image" accept="image/*" />
+
+        <button type="submit">Submit</button>
+      </form>
+
+      <script>
+        const dateInput = document.getElementById("date-lost");
+        const today = new Date().toISOString().split("T")[0];
+        dateInput.setAttribute("max", today);
+      </script>
+    </main>
+
+    <script>
+      const userPic = document.querySelector(".user-pic");
+      const subMenuWrap = document.querySelector(".sub-menu-wrap");
+
+      userPic.addEventListener("click", () => {
+        subMenuWrap.classList.toggle("open");
+      });
+    </script>
+  </body>
+</html>
