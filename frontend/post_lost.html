@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post Lost Item - Lost and Found</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="logo">Lost and Found</div>
+      <nav>
+        <div class="menu-icon">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+        <ul class="nav-list">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="items.html">Found Items</a></li>
+          <li><a href="post.html">Post Found Item</a></li>
+          <li><a href="post_lost.html" class="active">Post Lost Item</a></li>
+          <li><a href="lost.html">Lost Items</a></li>
+          <li><a href="#" id="logoutBtn">Logout</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <div class="post-container">
+        <h1>Post a Lost Item</h1>
+        <form id="postLostForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="name">Item Name</label>
+            <input type="text" id="name" name="name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="electronics">Electronics</option>
+              <option value="personal belongings">Personal Belongings</option>
+              <option value="documents">Documents</option>
+              <option value="clothing">Clothing</option>
+              <option value="accessories">Accessories</option>
+              <option value="keys">Keys</option>
+              <option value="bags/wallets">Bags/Wallets</option>
+              <option value="jewelry">Jewelry</option>
+              <option value="eyewear">Eyewear</option>
+              <option value="umbrellas">Umbrellas</option>
+              <option value="chargers">Chargers</option>
+              <option value="headphones">Headphones</option>
+              <option value="water bottles">Water Bottles</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              rows="4"
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="date">Date Lost</label>
+            <input type="date" id="date" name="date" required />
+          </div>
+
+          <div class="form-group">
+            <label for="time">Time Lost</label>
+            <input type="time" id="time" name="time" required />
+          </div>
+
+          <div class="form-group">
+            <label for="location">Location Lost</label>
+            <input type="text" id="location" name="location" required />
+          </div>
+
+          <div class="form-group">
+            <label for="image">Image (Optional)</label>
+            <input type="file" id="image" name="image" accept="image/*" />
+          </div>
+
+          <input type="hidden" id="type" name="type" value="lost" />
+
+          <button type="submit" class="btn">Submit</button>
+          <p class="form-message" id="postMessage"></p>
+        </form>
+      </div>
+    </main>
+
+    <script>
+      // Check if user is logged in
+      document.addEventListener("DOMContentLoaded", function () {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          window.location.href = "login.html";
+        }
+
+        // Set max date to today
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("date").setAttribute("max", today);
+      });
+
+      // Toggle menu for mobile
+      document
+        .querySelector(".menu-icon")
+        .addEventListener("click", function () {
+          document.querySelector(".nav-list").classList.toggle("show");
+        });
+
+      // Logout functionality
+      document
+        .getElementById("logoutBtn")
+        .addEventListener("click", function (e) {
+          e.preventDefault();
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "login.html";
+        });
+
+      // Form submission
+      document
+        .getElementById("postLostForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const token = localStorage.getItem("token");
+          if (!token) {
+            window.location.href = "login.html";
+            return;
+          }
+
+          const formData = new FormData(this);
+          const messageElement = document.getElementById("postMessage");
+
+          try {
+            const response = await fetch("http://localhost:5000/api/items", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              messageElement.textContent =
+                "Item posted successfully! Redirecting...";
+              messageElement.style.color = "green";
+
+              // Redirect to lost items page
+              setTimeout(() => {
+                window.location.href = "lost.html";
+              }, 1500);
+            } else {
+              messageElement.textContent =
+                data.message || "Failed to post item";
+              messageElement.style.color = "red";
+            }
+          } catch (error) {
+            messageElement.textContent = "An error occurred. Please try again.";
+            messageElement.style.color = "red";
+            console.error("Post error:", error);
+          }
+        });
+
+      // to handle file uploads
+      document
+        .getElementById("post-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const token = localStorage.getItem("token");
+
+          try {
+            const response = await fetch("http://localhost:5000/api/items", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            });
+
+            if (response.ok) {
+              alert("Item posted successfully!");
+              window.location.href = "items.html";
+            } else {
+              const data = await response.json();
+              alert(data.message || "Failed to post item");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            alert("An error occurred while posting the item");
+          }
+        });
+    </script>
+  </body>
+</html>
