@@ -46,19 +46,20 @@
 
         <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
       </form>
+      <p id="loginMessage"></p>
     </main>
 
     <script>
-      // Toggle menu for mobile
+      /* // Toggle menu for mobile
       document
         .querySelector(".menu-icon")
         .addEventListener("click", function () {
           document.querySelector(".nav-list").classList.toggle("show");
-        });
+        }); */
 
       // Login form submission
       document
-        .getElementById("loginForm")
+        .querySelector(".auth-form")
         .addEventListener("submit", async function (e) {
           e.preventDefault();
 

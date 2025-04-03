@@ -15,7 +15,7 @@ exports.createItem = async (req, res) => {
       date,
       time,
       location,
-      type, // 'lost' or 'found'
+      type, // lost or found
       user: req.user.id,
       image: req.file ? req.file.filename : "default.jpg",
     });
@@ -25,18 +25,12 @@ exports.createItem = async (req, res) => {
 
     // Add item to user's items
     await User.findByIdAndUpdate(req.user.id, {
-      $push: { itemsReported: savedItem._id },
+      $push: { itemsReported: savedItem.id },
     });
 
-    res.status(201).json({
-      success: true,
-      item: savedItem,
-    });
+    res.status(201).json({ success: true, item: savedItem });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -72,15 +66,8 @@ exports.getItems = async (req, res) => {
       .populate("user", "name email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: items.length,
-      data: items,
-    });
+    res.status(200).json({ success: true, count: items.length, data: items });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };

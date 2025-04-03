@@ -8,73 +8,90 @@
   </head>
   <body>
     <header>
-      <div class="logo">Lost and Found</div>
-      <nav>
-        <div class="menu-icon">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
+      <div class="logo" onclick="window.location.href='home.html'">
+        LOST & FOUND
+      </div>
+      <div class="nav-profile-container">
+        <nav>
+          <a href="home.html">Home</a>
+          <a href="post.html">Post Item</a>
+          <a href="lost.html">Lost Item</a>
+        </nav>
+        <img src="images/profile-pic.png" alt="profile" class="user-pic" />
+        <div class="sub-menu-wrap">
+          <div class="sub-menu">
+            <div class="user-info">
+              <img src="images/profile-pic.png" />
+              <h3>Tilak</h3>
+            </div>
+            <hr />
+            <a href="#" class="sub-menu-link">
+              <img src="images/profile.png" />
+              <p>Edit Profile</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/settings.png" />
+              <p>Settings</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/logout.png" />
+              <p>Logout</p>
+              <span>></span>
+            </a>
+          </div>
         </div>
-        <ul class="nav-list">
-          <li><a href="home.html">Home</a></li>
-          <li><a href="items.html" class="active">Found Items</a></li>
-          <li><a href="post.html">Post Item</a></li>
-          <li><a href="lost.html">Lost Items</a></li>
-          <li><a href="#" id="logoutBtn">Logout</a></li>
-        </ul>
-      </nav>
+      </div>
     </header>
 
     <main>
       <h2>Found Items</h2>
-      <form class="search-bar" id="searchForm">
+      <form class="search-bar" role="search">
         <input type="text" id="search-input" placeholder="Search items..." />
-        <select id="category" name="category" required>
-          <option value="">Select a category</option>
-          <option value="electronics">Electronics</option>
-          <option value="personal belongings">Personal Belongings</option>
-          <option value="documents">Documents</option>
-          <option value="clothing">Clothing</option>
-          <option value="accessories">Accessories</option>
-          <option value="keys">Keys</option>
-          <option value="bags/wallets">Bags/Wallets</option>
-          <option value="jewelry">Jewelry</option>
-          <option value="eyewear">Eyewear</option>
-          <option value="umbrellas">Umbrellas</option>
-          <option value="chargers">Chargers</option>
-          <option value="headphones">Headphones</option>
-          <option value="water bottles">Water Bottles</option>
-          <option value="other">Other</option>
-        </select>
         <button type="submit">Search</button>
       </form>
 
-      <div class="filter-container">
-        <select id="category-filter">
-          <option value="">All Categories</option>
-          <option value="electronics">Electronics</option>
-          <option value="personal belongings">Personal Belongings</option>
-          <option value="documents">Documents</option>
-          <option value="clothing">Clothing</option>
-          <option value="accessories">Accessories</option>
-          <option value="keys">Keys</option>
-          <option value="bags/wallets">Bags/Wallets</option>
-          <option value="jewelry">Jewelry</option>
-          <option value="eyewear">Eyewear</option>
-          <option value="umbrellas">Umbrellas</option>
-          <option value="chargers">Chargers</option>
-          <option value="headphones">Headphones</option>
-          <option value="water bottles">Water Bottles</option>
-          <option value="other">Other</option>
-        </select>
+      <div id="item-not-found">
+        <p>
+          If your lost item is not available below
+          <a href="post_lost.html">click here</a>
+        </p>
       </div>
 
-      <div id="item-not-found" style="display: none">
-        <p>No items found matching your search criteria.</p>
-      </div>
-
-      <div class="items-container" id="items-container">
-        <!-- Items will be loaded dynamically here -->
+      <div class="items-container">
+        <div class="item-card">
+          <img src="images/wallet.png" alt="Found Wallet" />
+          <h3>Found Wallet</h3>
+          <p>Category: Bags/Wallets</p>
+          <p>Location: City Street Bench</p>
+          <p>Date: 2025-02-26</p>
+          <p>Time: 14:30</p>
+        </div>
+        <div class="item-card">
+          <img src="images/keys.png" alt="Found Keys" />
+          <h3>Found Keys</h3>
+          <p>Category: Keys</p>
+          <p>Location: Park</p>
+          <p>Date: 2025-02-25</p>
+          <p>Time: 10:15</p>
+        </div>
+        <div class="item-card">
+          <img src="images/phone.png" alt="Found Smartphone" />
+          <h3>Found Smartphone</h3>
+          <p>Category: Electronics</p>
+          <p>Location: Cafeteria</p>
+          <p>Date: 2025-02-24</p>
+          <p>Time: 12:45</p>
+        </div>
+        <div class="item-card">
+          <img src="images/glasses.png" alt="Found Eyeglasses" />
+          <h3>Found Eyeglasses</h3>
+          <p>Category: Eyewear</p>
+          <p>Location: Library</p>
+          <p>Date: 2025-02-23</p>
+          <p>Time: 16:20</p>
+        </div>
       </div>
     </main>
 

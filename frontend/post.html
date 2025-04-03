@@ -8,89 +8,109 @@
   </head>
   <body>
     <header>
-      <div class="logo">Lost and Found</div>
-      <nav>
-        <div class="menu-icon">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
+      <div class="logo" onclick="window.location.href='home.html'">
+        LOST & FOUND
+      </div>
+      <div class="nav-profile-container">
+        <nav>
+          <a href="home.html">Home</a>
+          <a href="items.html">Found Item</a>
+          <a href="lost.html">Lost Item</a>
+        </nav>
+        <img src="images/profile-pic.png" alt="profile" class="user-pic" />
+        <div class="sub-menu-wrap">
+          <div class="sub-menu">
+            <div class="user-info">
+              <img src="images/profile-pic.png" />
+              <h3>Tilak</h3>
+            </div>
+            <hr />
+            <a href="#" class="sub-menu-link">
+              <img src="images/profile.png" />
+              <p>Edit Profile</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/settings.png" />
+              <p>Settings</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/logout.png" />
+              <p>Logout</p>
+              <span>></span>
+            </a>
+          </div>
         </div>
-        <ul class="nav-list">
-          <li><a href="home.html">Home</a></li>
-          <li><a href="items.html">Found Items</a></li>
-          <li><a href="post.html" class="active">Post Item</a></li>
-          <li><a href="lost.html">Lost Items</a></li>
-          <li><a href="#" id="logoutBtn">Logout</a></li>
-        </ul>
-      </nav>
+      </div>
     </header>
 
-    <main>
-      <div class="post-container">
-        <h1>Post a Found Item</h1>
-        <form id="postFoundForm" enctype="multipart/form-data">
-          <div class="form-group">
-            <label for="name">Item Name</label>
-            <input type="text" id="name" name="name" required />
-          </div>
+    <main id="post-item">
+      <h2>Post Found Item</h2>
+      <form id="post-form">
+        <label for="name">Name:</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          placeholder="Enter item name"
+          required
+          minlength="3"
+          maxlength="50"
+        />
 
-          <div class="form-group">
-            <label for="category">Category</label>
-            <select id="category" name="category" required>
-              <option value="">Select a category</option>
-              <option value="electronics">Electronics</option>
-              <option value="personal belongings">Personal Belongings</option>
-              <option value="documents">Documents</option>
-              <option value="clothing">Clothing</option>
-              <option value="accessories">Accessories</option>
-              <option value="keys">Keys</option>
-              <option value="bags/wallets">Bags/Wallets</option>
-              <option value="jewelry">Jewelry</option>
-              <option value="eyewear">Eyewear</option>
-              <option value="umbrellas">Umbrellas</option>
-              <option value="chargers">Chargers</option>
-              <option value="headphones">Headphones</option>
-              <option value="water bottles">Water Bottles</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+        <label for="category">Item Category:</label>
+        <select id="category" name="category" required>
+          <option value="">Select a category</option>
+          <option value="electronics">Electronics</option>
+          <option value="personal_belongings">Personal Belongings</option>
+          <option value="documents">Documents/Cards</option>
+          <option value="clothing">Clothing</option>
+          <option value="accessories">Accessories</option>
+          <option value="keys">Keys</option>
+          <option value="bags">Bags/Wallets</option>
+          <option value="jewelry">Jewelry</option>
+          <option value="eyewear">Eyeglasses/Sunglasses</option>
+          <option value="umbrellas">Umbrellas</option>
+          <option value="chargers">Chargers</option>
+          <option value="headphones">Headphones</option>
+          <option value="water_bottles">Water Bottles</option>
+          <option value="other">Other</option>
+        </select>
 
-          <div class="form-group">
-            <label for="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              rows="4"
-              required
-            ></textarea>
-          </div>
+        <label for="description">Description:</label>
+        <textarea
+          id="description"
+          name="description"
+          placeholder="Provide a brief description..."
+          rows="4"
+          required
+          minlength="10"
+          maxlength="500"
+        ></textarea>
 
-          <div class="form-group">
-            <label for="date">Date Found</label>
-            <input type="date" id="date" name="date" required />
-          </div>
+        <label for="date-found">Date Found:</label>
+        <input type="date" id="date-found" name="date-found" required max="" />
 
-          <div class="form-group">
-            <label for="time">Time Found</label>
-            <input type="time" id="time" name="time" required />
-          </div>
+        <label for="time-found">Time Found:</label>
+        <input type="time" id="time-found" name="time-found" required />
 
-          <div class="form-group">
-            <label for="location">Location Found</label>
-            <input type="text" id="location" name="location" required />
-          </div>
+        <label for="location">Location Found:</label>
+        <input
+          type="text"
+          id="location"
+          name="location"
+          placeholder="Enter location where item was found"
+          required
+          minlength="5"
+          maxlength="100"
+        />
 
-          <div class="form-group">
-            <label for="image">Image (Optional)</label>
-            <input type="file" id="image" name="image" accept="image/*" />
-          </div>
+        <label for="image">Upload Image:</label>
+        <input type="file" id="image" name="image" accept="image/*" />
 
-          <input type="hidden" id="type" name="type" value="found" />
-
-          <button type="submit" class="btn">Submit</button>
-          <p class="form-message" id="postMessage"></p>
-        </form>
-      </div>
+        <button type="submit">Submit</button>
+      </form>
     </main>
 
     <script>

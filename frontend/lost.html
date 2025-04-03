@@ -8,58 +8,78 @@
   </head>
   <body>
     <header>
-      <div class="logo">Lost and Found</div>
-      <nav>
-        <div class="menu-icon">
-          <div class="bar"></div>
-          <div class="bar"></div>
-          <div class="bar"></div>
+      <div class="logo" onclick="window.location.href='home.html'">
+        LOST & FOUND
+      </div>
+      <div class="nav-profile-container">
+        <nav>
+          <a href="home.html">Home</a>
+          <a href="items.html">Found Item</a>
+          <a href="post.html">Post Item</a>
+        </nav>
+        <img src="images/profile-pic.png" alt="profile" class="user-pic" />
+        <div class="sub-menu-wrap">
+          <div class="sub-menu">
+            <div class="user-info">
+              <img src="images/profile-pic.png" />
+              <h3>Tilak</h3>
+            </div>
+            <hr />
+            <a href="#" class="sub-menu-link">
+              <img src="images/profile.png" />
+              <p>Edit Profile</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/settings.png" />
+              <p>Settings</p>
+              <span>></span>
+            </a>
+            <a href="#" class="sub-menu-link">
+              <img src="images/logout.png" />
+              <p>Logout</p>
+              <span>></span>
+            </a>
+          </div>
         </div>
-        <ul class="nav-list">
-          <li><a href="home.html">Home</a></li>
-          <li><a href="items.html">Found Items</a></li>
-          <li><a href="post.html">Post Item</a></li>
-          <li><a href="lost.html" class="active">Lost Items</a></li>
-          <li><a href="#" id="logoutBtn">Logout</a></li>
-        </ul>
-      </nav>
+      </div>
     </header>
 
     <main>
       <h2>Lost Items</h2>
-      <form class="search-bar" id="searchForm">
+      <form class="search-bar" role="search">
         <input type="text" id="search-input" placeholder="Search items..." />
         <button type="submit">Search</button>
       </form>
 
-      <div class="filter-container">
-        <select id="category-filter">
-          <option value="">All Categories</option>
-          <option value="electronics">Electronics</option>
-          <option value="personal belongings">Personal Belongings</option>
-          <option value="documents">Documents</option>
-          <option value="clothing">Clothing</option>
-          <option value="accessories">Accessories</option>
-          <option value="keys">Keys</option>
-          <option value="bags/wallets">Bags/Wallets</option>
-          <option value="jewelry">Jewelry</option>
-          <option value="eyewear">Eyewear</option>
-          <option value="umbrellas">Umbrellas</option>
-          <option value="chargers">Chargers</option>
-          <option value="headphones">Headphones</option>
-          <option value="water bottles">Water Bottles</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <div id="item-not-found" style="display: none">
-        <p>No items found matching your search criteria.</p>
-      </div>
-
-      <div class="items-container" id="items-container">
-        <!-- Items will be loaded dynamically here -->
+      <div class="items-container">
+        <div class="item-card">
+          <img src="images/iphone.png" alt="Lost Smartphone" />
+          <h3>Lost iPhone 13 Pro</h3>
+          <p>Category: Electronics</p>
+          <p>Location: City Mall Food Court</p>
+          <p>Date: 2025-02-27</p>
+          <p>Time: 18:45</p>
+        </div>
+        <div class="item-card">
+          <img src="images/sunglasses.png" alt="Lost Eyeglasses" />
+          <h3>Lost Ray-Ban Sunglasses</h3>
+          <p>Category: Eyewear</p>
+          <p>Location: Beach Boardwalk</p>
+          <p>Date: 2025-02-26</p>
+          <p>Time: 14:20</p>
+        </div>
       </div>
     </main>
+
+    <script>
+      const userPic = document.querySelector(".user-pic");
+      const subMenuWrap = document.querySelector(".sub-menu-wrap");
+
+      userPic.addEventListener("click", () => {
+        subMenuWrap.classList.toggle("open"); // Toggle the "open" class
+      });
+    </script>
 
     <script>
       // Check if user is logged in
