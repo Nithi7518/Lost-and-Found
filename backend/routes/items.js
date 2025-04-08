@@ -1,7 +1,13 @@
 // routes/items.js
 const express = require("express");
 const router = express.Router();
-const { getItems, createItem } = require("../controllers/itemController");
+const {
+  getItems,
+  createItem,
+  getUserItems,
+  deleteItem,
+  getItemResponses,
+} = require("../controllers/itemController");
 const { protect } = require("../middleware/auth");
 const upload = require("../utils/upload");
 
@@ -17,5 +23,11 @@ router.post(
   },
   createItem
 );
+
+router.get("/user", protect, getUserItems);
+
+router.delete("/:itemId", protect, deleteItem);
+
+router.get("/items/:itemId/responses", protect, getItemResponses);
 
 module.exports = router;

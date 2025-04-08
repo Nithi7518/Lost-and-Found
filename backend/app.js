@@ -33,11 +33,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api", claimRoutes); // Add claim routes under /api
 
+/* // Configure logging to ignore static files
 app.use((req, res, next) => {
-  console.log(`Received ${req.method} request for ${req.url}`);
-  console.log("Body:", req.body);
+  const ignoredExtensions = [".css", ".js", ".png", ".jpg", ".ico"];
+  const isStaticFile = ignoredExtensions.some((ext) => req.url.endsWith(ext));
+
+  if (!isStaticFile) {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  }
   next();
-});
+}); */
 
 // Secure image endpoint - only accessible to verified users
 app.get("/secure-image/:filename", async (req, res) => {

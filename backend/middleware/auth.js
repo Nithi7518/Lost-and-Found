@@ -3,31 +3,35 @@ const User = require("../models/User");
 
 exports.protect = async (req, res, next) => {
   try {
-    let token;
-
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    }
+    // 1. Get token from header
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        error: "Not authorized to access this route",
+        message: "No token, authorization denied",
       });
     }
 
-    // Verify token
+    // 2. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decoded.id).select("-password");
+    // 3. Get user without password for general protection
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({
+    res.status(401).json({
       success: false,
-      error: "Not authorized, token failed",
+      message: "Token is not valid",
     });
   }
 };

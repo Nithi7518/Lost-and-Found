@@ -14,13 +14,11 @@ const claimSchema = new mongoose.Schema({
   responses: [
     {
       questionId: {
-        type: String,
-        required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "VerificationQuestion",
       },
-      response: {
-        type: String,
-        required: true,
-      },
+      question: String,
+      answer: String,
     },
   ],
   status: {

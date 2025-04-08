@@ -1,8 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const { register, login } = require("../controllers/authController");
+const {
+  register,
+  login,
+  changePassword,
+} = require("../controllers/authController");
+const { protect } = require("../middleware/auth"); // Add auth middleware
 
+// Existing routes
 router.post("/register", register);
 router.post("/login", login);
 
-module.exports = router; // Fix 1: Direct export
+// Add password change route with auth middleware
+router.post("/change-password", protect, changePassword);
+
+module.exports = router;

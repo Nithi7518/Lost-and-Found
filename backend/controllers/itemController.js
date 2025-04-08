@@ -108,3 +108,100 @@ exports.getItems = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// In controllers/itemController.js
+exports.getUserItems = async (req, res) => {
+  try {
+    const { type } = req.query;
+    const query = { user: req.user.id };
+
+    if (type) {
+      query.type = type;
+    }
+
+    const items = await Item.find(query).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: items.length,
+      data: items,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+exports.deleteItem = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    // Check if user owns this item
+    if (item.user.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this item",
+      });
+    }
+
+    await Item.findByIdAndDelete(req.params.itemId);
+
+    res.status(200).json({
+      success: true,
+      message: "Item deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+exports.getItemResponses = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+
+    // Find the item
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    // Check if user is the owner of the item
+    if (item.user.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view responses for this item",
+      });
+    }
+
+    // Get responses from the Claim model
+    const claims = await Claim.find({ itemId })
+      .populate("claimantId", "name email")
+      .select("responses status");
+
+    res.status(200).json({
+      success: true,
+      data: claims,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

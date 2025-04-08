@@ -14,7 +14,7 @@ router.get(
 router.post("/items/:itemId/claim", protect, claimController.submitClaim);
 
 // Get pending claims for my items (as item owner)
-router.get("/my-items/claims", protect, claimController.getMyItemClaims);
+router.get("/my-items-claims", protect, claimController.getMyItemClaims);
 
 // Verify a claim (approve/reject)
 router.put("/claims/:claimId/verify", protect, claimController.verifyClaim);
