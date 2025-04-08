@@ -1,5 +1,6 @@
 const Item = require("../models/Item");
 const User = require("../models/User");
+const VerificationQuestion = require("../models/VerificationQuestion");
 
 // Create a new item (lost or found)
 exports.createItem = async (req, res) => {
@@ -7,30 +8,66 @@ exports.createItem = async (req, res) => {
     const { name, category, description, date, time, location, type } =
       req.body;
 
-    // Create new item with image if provided
+    // Create new item
     const newItem = new Item({
       name,
       category,
       description,
-      date,
+      date: new Date(date),
       time,
       location,
-      type, // lost or found
+      type,
       user: req.user.id,
       image: req.file ? req.file.filename : "default.jpg",
     });
 
-    // Save item to database
     const savedItem = await newItem.save();
 
-    // Add item to user's items
+    // Handle verification questions for found items
+    if (type === "found") {
+      if (!req.body.questions) {
+        return res.status(400).json({
+          success: false,
+          message: "Verification questions required for found items",
+        });
+      }
+
+      let questions;
+      try {
+        questions = JSON.parse(req.body.questions);
+      } catch (e) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid questions format",
+        });
+      }
+
+      const verificationQuestions = new VerificationQuestion({
+        itemId: savedItem._id,
+        questions: questions.map((q) => ({
+          question: q.question,
+          answer: q.answer,
+        })),
+      });
+
+      await verificationQuestions.save();
+    }
+
+    // Update user's items
     await User.findByIdAndUpdate(req.user.id, {
-      $push: { itemsReported: savedItem.id },
+      $push: { itemsReported: savedItem._id },
     });
 
-    res.status(201).json({ success: true, item: savedItem });
+    res.status(201).json({
+      success: true,
+      item: savedItem,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Item creation error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

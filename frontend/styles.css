@@ -325,7 +325,12 @@ main {
 .items-container {
   display: flex;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
+}
+
+.items-container img {
+  max-height: 200px;
 }
 
 .item-card {
@@ -496,10 +501,156 @@ main {
   text-decoration: underline;
 }
 
-input:invalid {
+input:not(:focus):invalid {
   border: 1px solid red;
 }
 
-input:valid {
+input:not(:focus):valid {
   border: 1px solid green;
+}
+
+/* For file inputs specifically */
+input[type="file"]:not(:focus):invalid,
+input[type="file"]:not(:focus):valid {
+  /* Remove aggressive styling or blinking effects */
+  border: none;
+  outline: none;
+}
+
+/* new */
+/* Claim modal styles */
+.claim-modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.claim-modal-content {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.claim-modal .close {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.claim-modal h2 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.question {
+  margin-bottom: 20px;
+}
+
+.question label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#submit-claim-btn {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+#submit-claim-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.item-placeholder {
+  background-color: #f0f0f0;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.claim-btn {
+  background-color: #ff5722;
+  color: #fff;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.claim-btn:hover {
+  background-color: #e64a19;
+}
+
+/* Add to your styles.css file */
+.verification-section {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.verification-section h3 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.question-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.remove-question {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.secondary-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
 }

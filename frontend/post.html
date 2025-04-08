@@ -48,7 +48,8 @@
     <main id="post-item">
       <h2>Post Found Item</h2>
       <form id="post-form">
-        <label for="name">Name:</label>
+        <input type="hidden" id="type" name="type" value="found" />
+        Name:
         <input
           type="text"
           id="name"
@@ -59,7 +60,7 @@
           maxlength="50"
         />
 
-        <label for="category">Item Category:</label>
+        Item Category:
         <select id="category" name="category" required>
           <option value="">Select a category</option>
           <option value="electronics">Electronics</option>
@@ -78,7 +79,7 @@
           <option value="other">Other</option>
         </select>
 
-        <label for="description">Description:</label>
+        Description:
         <textarea
           id="description"
           name="description"
@@ -89,13 +90,13 @@
           maxlength="500"
         ></textarea>
 
-        <label for="date-found">Date Found:</label>
-        <input type="date" id="date-found" name="date-found" required max="" />
+        Date Found:
+        <input type="date" id="date-found" name="date" required max="" />
 
-        <label for="time-found">Time Found:</label>
-        <input type="time" id="time-found" name="time-found" required />
+        Time Found:
+        <input type="time" id="time-found" name="time" required />
 
-        <label for="location">Location Found:</label>
+        Location Found:
         <input
           type="text"
           id="location"
@@ -106,11 +107,41 @@
           maxlength="100"
         />
 
-        <label for="image">Upload Image:</label>
+        Upload Image:
         <input type="file" id="image" name="image" accept="image/*" />
+
+        <div class="verification-section">
+          <h3>Verification Questions</h3>
+          <p>
+            Add questions that will help identify the true owner of this item
+          </p>
+
+          <div id="questions-container">
+            <div class="question-pair">
+              <input
+                type="text"
+                class="question-input"
+                placeholder="Question (e.g., What color is it?)"
+                required
+              />
+              <input
+                type="text"
+                class="answer-input"
+                placeholder="Answer"
+                required
+              />
+              <button type="button" class="remove-question">Remove</button>
+            </div>
+          </div>
+
+          <button type="button" id="add-question" class="secondary-btn">
+            Add Another Question
+          </button>
+        </div>
 
         <button type="submit">Submit</button>
       </form>
+      <p id="postMessage"></p>
     </main>
 
     <script>
@@ -123,17 +154,50 @@
 
         // Set max date to today
         const today = new Date().toISOString().split("T")[0];
-        document.getElementById("date").setAttribute("max", today);
+        document.getElementById("date-found").setAttribute("max", today);
+
+        // Add event listener for "Add Another Question" button
+        document
+          .getElementById("add-question")
+          .addEventListener("click", function () {
+            const container = document.getElementById("questions-container");
+            const newQuestion = document.createElement("div");
+            newQuestion.className = "question-pair";
+            newQuestion.innerHTML = `
+      <input type="text" class="question-input" placeholder="Question (e.g., What color is it?)" required>
+      <input type="text" class="answer-input" placeholder="Answer" required>
+      <button type="button" class="remove-question">Remove</button>
+    `;
+            container.appendChild(newQuestion);
+
+            // Add remove functionality
+            newQuestion
+              .querySelector(".remove-question")
+              .addEventListener("click", function () {
+                container.removeChild(newQuestion);
+              });
+          });
+
+        // Add remove functionality to the initial question
+        document
+          .querySelector(".remove-question")
+          .addEventListener("click", function () {
+            if (document.querySelectorAll(".question-pair").length > 1) {
+              this.parentElement.remove();
+            } else {
+              alert("You need at least one verification question");
+            }
+          });
       });
 
-      // Toggle menu for mobile
+      /* // Toggle menu for mobile
       document
         .querySelector(".menu-icon")
         .addEventListener("click", function () {
           document.querySelector(".nav-list").classList.toggle("show");
-        });
+        }); */
 
-      // Logout functionality
+      /* // Logout functionality
       document
         .getElementById("logoutBtn")
         .addEventListener("click", function (e) {
@@ -141,11 +205,11 @@
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           window.location.href = "login.html";
-        });
+        }); */
 
       // Form submission
       document
-        .getElementById("postFoundForm")
+        .getElementById("post-form")
         .addEventListener("submit", async function (e) {
           e.preventDefault();
 
@@ -155,8 +219,29 @@
             return;
           }
 
+          // Collect verification questions and answers
+          const questions = [];
+          document.querySelectorAll(".question-pair").forEach((pair) => {
+            const question = pair.querySelector(".question-input").value.trim();
+            const answer = pair.querySelector(".answer-input").value.trim();
+
+            if (question && answer) {
+              questions.push({ question, answer });
+            }
+          });
+
+          // Validate questions for found items
+          const itemType = document.getElementById("type").value;
+          if (itemType === "found" && questions.length === 0) {
+            alert(
+              "Please add at least one verification question for found items"
+            );
+            return;
+          }
+
           const formData = new FormData(this);
           const messageElement = document.getElementById("postMessage");
+          formData.append("questions", JSON.stringify(questions));
 
           try {
             const response = await fetch("http://localhost:5000/api/items", {
@@ -190,9 +275,9 @@
           }
         });
 
-      // to handle file uploads
+      /* // to handle file uploads
       document
-        .getElementById("postFoundform")
+        .getElementById("post-form")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
           const formData = new FormData(e.target);
@@ -218,7 +303,7 @@
             console.error("Error:", error);
             alert("An error occurred while posting the item");
           }
-        });
+        }); */
     </script>
   </body>
 </html>
