@@ -83,6 +83,14 @@
           </div>
         </div>
       </div>
+      <!-- Add this before the closing </main> tag -->
+      <div id="responses-modal" class="modal">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h3>Item Responses</h3>
+          <div id="responses-container"></div>
+        </div>
+      </div>
     </main>
 
     <!-- Change Password Modal -->
@@ -139,12 +147,22 @@
       // Toggle profile submenu
       const userPic = document.querySelector(".user-pic");
       const subMenuWrap = document.querySelector(".sub-menu-wrap");
+      let logoutTimer;
+
+      // Auto-logout functionality
+      function resetLogoutTimer() {
+        clearTimeout(logoutTimer);
+        logoutTimer = setTimeout(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "login.html";
+        }, 300000); // 5 minutes
+      }
 
       userPic.addEventListener("click", () => {
         subMenuWrap.classList.toggle("open");
       });
 
-      // Check if user is logged in
       document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -152,20 +170,22 @@
           return;
         }
 
-        // Load user profile data
-        const user = JSON.parse(localStorage.getItem("user"));
-        if (user) {
-          document.getElementById("user-name").textContent = user.name;
-          document.getElementById("profile-name").textContent = user.name;
-          document.getElementById("profile-email").textContent = user.email;
-          document.getElementById("profile-phone").textContent =
-            user.phone || "Not provided";
-        }
+        // Initialize auto-logout
+        resetLogoutTimer();
+        document.addEventListener("mousemove", resetLogoutTimer);
+        document.addEventListener("keypress", resetLogoutTimer);
 
-        // Load user items
-        loadUserItems("lost");
+        // Load user data
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        document
+          .querySelectorAll("#user-name, #profile-name")
+          .forEach((el) => (el.textContent = user.name || "User"));
+        document.getElementById("profile-email").textContent =
+          user.email || "N/A";
+        document.getElementById("profile-phone").textContent =
+          user.phone || "N/A";
 
-        // Tab switching functionality
+        // Tab functionality
         const tabBtns = document.querySelectorAll(".tab-btn");
         tabBtns.forEach((btn) => {
           btn.addEventListener("click", () => {
@@ -175,243 +195,234 @@
           });
         });
 
-        // Logout functionality
+        // Initial load
+        loadUserItems("lost");
+        setupChangePassword();
+
+        // Logout handler
         document
           .getElementById("logout-link")
-          .addEventListener("click", function (e) {
+          .addEventListener("click", (e) => {
             e.preventDefault();
             localStorage.removeItem("token");
             localStorage.removeItem("user");
             window.location.href = "login.html";
           });
-
-        // Set up change password functionality
-        setupChangePassword();
       });
 
-      // Function to load user items
       async function loadUserItems(type) {
         const token = localStorage.getItem("token");
-        const itemsContainer = document.getElementById("user-items");
-        itemsContainer.innerHTML =
-          "<p class='loading-text'>Loading your items...</p>";
+        const container = document.getElementById("user-items");
 
         try {
-          const response = await fetch(
-            `http://localhost:5000/api/items/user?type=${type}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+          let endpoint = `http://localhost:5000/api/items/user?type=${type}`;
+          if (type === "claimed") {
+            endpoint = "http://localhost:5000/api/items/claimed";
+          }
+          const response = await fetch(endpoint, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-          // Check if response is ok before parsing
-          if (!response.ok) {
+          // Check for HTML responses
+          const contentType = response.headers.get("content-type");
+          if (!contentType?.includes("application/json")) {
             const text = await response.text();
-            console.error("Server response:", text);
-            throw new Error(
-              `Server returned ${response.status}: ${response.statusText}`
-            );
+            throw new Error(`Invalid response: ${text.slice(0, 100)}`);
           }
 
           const data = await response.json();
 
-          if (response.ok) {
-            if (!data.data || data.data.length === 0) {
-              itemsContainer.innerHTML = `<p class="no-items">You have no ${type} items</p>`;
-              return;
-            }
+          container.innerHTML = data.data?.length
+            ? ""
+            : `<p>No ${type} items found</p>`;
 
-            itemsContainer.innerHTML = "";
-            data.data.forEach((item) => {
-              const itemElement = document.createElement("div");
-              itemElement.className = "item-row";
+          data.data?.forEach((item) => {
+            const itemEl = document.createElement("div");
+            itemEl.className = "item-card";
+            itemEl.innerHTML = `
+                      <div class="item-info">
+                          <h4>${item.name}</h4>
+                          <p>Category: ${item.category}</p>
+                          <p>Location: ${item.location}</p>
+                          <p>Date: ${new Date(
+                            item.date
+                          ).toLocaleDateString()}</p>
+                          <p>Status: ${item.status}</p>
+                      </div>
+                      <div class="item-actions">
+                          ${
+                            type === "found"
+                              ? `<button class="view-btn" data-id="${item._id}">View Claims</button>`
+                              : `<button class="view-btn" data-id="${item._id}">View Details</button>`
+                          }
+                          <button class="delete-btn" data-id="${
+                            item._id
+                          }">Delete</button>
+                      </div>
+                  `;
 
-              // Format date
-              const itemDate = new Date(item.date).toLocaleDateString();
-
-              itemElement.innerHTML = `
-            <div class="item-info">
-              <h4>${item.name}</h4>
-              <p><strong>Category:</strong> ${item.category}</p>
-              <p><strong>Location:</strong> ${item.location}</p>
-              <p><strong>Date:</strong> ${itemDate}</p>
-              <p><strong>Status:</strong> ${item.status || "Active"}</p>
-            </div>
-            <div class="item-actions">
-              <button class="view-btn" data-id="${
-                item._id
-              }">View Details</button>
-              <button class="delete-btn" data-id="${item._id}">Delete</button>
-            </div>
-          `;
-
-              itemsContainer.appendChild(itemElement);
+            itemEl.querySelector(".view-btn").addEventListener("click", () => {
+              type === "found"
+                ? showItemResponses(item._id)
+                : (window.location.href = `item-detail.html?id=${item._id}`);
             });
 
-            // Add event listeners for buttons
-            document.querySelectorAll(".view-btn").forEach((btn) => {
-              btn.addEventListener("click", () => {
-                window.location.href = `item-detail.html?id=${btn.dataset.id}`;
-              });
-            });
-
-            document.querySelectorAll(".delete-btn").forEach((btn) => {
-              btn.addEventListener("click", async () => {
-                if (confirm("Are you sure you want to delete this item?")) {
-                  await deleteItem(btn.dataset.id);
+            itemEl
+              .querySelector(".delete-btn")
+              .addEventListener("click", async () => {
+                if (confirm("Delete this item?")) {
+                  await deleteItem(item._id);
                   loadUserItems(type);
                 }
               });
-            });
-          } else {
-            itemsContainer.innerHTML = `<p class="error-message">${
-              data.message || "Failed to load items"
-            }</p>`;
-          }
+
+            container.appendChild(itemEl);
+          });
         } catch (error) {
-          console.error("Error:", error);
-          itemsContainer.innerHTML = `<p class="error-message">Error loading items: ${error.message}</p>`;
+          console.error("Error loading items:", error);
+          container.innerHTML = `<p class="error">Error: ${error.message}</p>`;
         }
       }
 
-      // Function to delete an item
-      async function deleteItem(itemId) {
-        const token = localStorage.getItem("token");
+      async function showItemResponses(itemId) {
+        const modal = document.getElementById("responses-modal");
+        const container = document.getElementById("responses-container");
+        modal.style.display = "block";
+        container.innerHTML = "<p>Loading responses...</p>";
+
         try {
           const response = await fetch(
-            `http://localhost:5000/api/items/${itemId}`,
+            `http://localhost:5000/api/items/${itemId}/responses`,
             {
-              method: "DELETE",
               headers: {
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
             }
           );
 
-          if (!response.ok) {
-            const data = await response.json();
-            alert(data.message || "Failed to delete item");
+          // Validate JSON response
+          const contentType = response.headers.get("content-type");
+          if (!contentType?.includes("application/json")) {
+            const text = await response.text();
+            throw new Error(`Invalid response: ${text.substring(0, 100)}`);
           }
+
+          const data = await response.json();
+          container.innerHTML = data.data?.length
+            ? ""
+            : "<p>No responses yet</p>";
+
+          data.data?.forEach((claim) => {
+            const claimEl = document.createElement("div");
+            claimEl.className = "claim-card";
+            claimEl.innerHTML = `
+                      <div class="claim-header">
+                          <h4>${claim.claimantId?.name || "Anonymous"}</h4>
+                          <span class="status-${claim.status}">${
+              claim.status
+            }</span>
+                      </div>
+                      <div class="claim-details">
+                          ${claim.responses
+                            ?.map(
+                              (r) => `
+                              <div class="response">
+                                  <p><strong>Q:</strong> ${r.question}</p>
+                                  <p><strong>A:</strong> ${r.answer}</p>
+                              </div>
+                          `
+                            )
+                            .join("")}
+                      </div>
+                      ${
+                        claim.status === "pending"
+                          ? `
+                          <div class="claim-actions">
+                              <button class="approve" data-id="${claim._id}">Approve</button>
+                              <button class="reject" data-id="${claim._id}">Reject</button>
+                          </div>
+                      `
+                          : ""
+                      }
+                  `;
+
+            claimEl.querySelectorAll("button").forEach((btn) => {
+              btn.addEventListener("click", () =>
+                handleClaimAction(
+                  claim._id,
+                  btn.classList.contains("approve") ? "approved" : "rejected",
+                  itemId
+                )
+              );
+            });
+
+            container.appendChild(claimEl);
+          });
         } catch (error) {
-          console.error("Error:", error);
-          alert("Error deleting item");
+          console.error("Error loading responses:", error);
+          container.innerHTML = `<p class="error">Error: ${error.message}</p>`;
         }
       }
 
-      // Set up change password functionality
-      function setupChangePassword() {
-        const changePasswordModal = document.getElementById(
-          "change-password-modal"
-        );
-        const changePasswordBtn = document.getElementById(
-          "change-password-btn"
-        );
-        const cancelPasswordBtn = document.getElementById(
-          "cancel-password-btn"
-        );
-        const changePasswordForm = document.getElementById(
-          "change-password-form"
-        );
-        const passwordError = document.getElementById("password-error");
-
-        if (
-          !changePasswordBtn ||
-          !cancelPasswordBtn ||
-          !changePasswordForm ||
-          !changePasswordModal
-        ) {
-          console.error("Some change password elements are missing");
-          return;
-        }
-
-        // Add modal styles if not already in CSS
-        if (!document.getElementById("modal-styles")) {
-          const styleEl = document.createElement("style");
-          styleEl.id = "modal-styles";
-          styleEl.textContent = `
-        .modal {
-          display: none;
-          position: fixed;
-          z-index: 1000;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.5);
-        }
-        .modal-content {
-          background-color: #fff;
-          margin: 10% auto;
-          padding: 20px;
-          width: 80%;
-          max-width: 500px;
-          border-radius: 8px;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-      `;
-          document.head.appendChild(styleEl);
-        }
-
-        changePasswordBtn.addEventListener("click", () => {
-          console.log("Change password button clicked");
-          changePasswordForm.reset();
-          passwordError.style.display = "none";
-          changePasswordModal.style.display = "block";
-        });
-
-        cancelPasswordBtn.addEventListener("click", () => {
-          changePasswordModal.style.display = "none";
-        });
-
-        // Close modals when clicking on the X
-        document.querySelectorAll(".close").forEach((closeBtn) => {
-          closeBtn.addEventListener("click", () => {
-            document.querySelectorAll(".modal").forEach((modal) => {
-              modal.style.display = "none";
-            });
-          });
-        });
-
-        // Close modals when clicking outside the modal content
-        window.addEventListener("click", (event) => {
-          document.querySelectorAll(".modal").forEach((modal) => {
-            if (event.target === modal) {
-              modal.style.display = "none";
+      async function handleClaimAction(claimId, status, itemId) {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/claims/${claimId}/verify`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({ status }),
             }
+          );
+
+          if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+          alert(`Claim ${status}`);
+          document.getElementById("responses-modal").style.display = "none";
+          loadUserItems("found");
+        } catch (error) {
+          console.error("Error handling claim:", error);
+          alert(`Error: ${error.message}`);
+        }
+      }
+
+      async function deleteItem(itemId) {
+        try {
+          await fetch(`http://localhost:5000/api/items/${itemId}`, {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
           });
-        });
+        } catch (error) {
+          console.error("Error deleting item:", error);
+          throw error;
+        }
+      }
 
-        // Handle form submission
-        changePasswordForm.addEventListener("submit", async function (e) {
+      function setupChangePassword() {
+        const form = document.getElementById("change-password-form");
+        const modal = document.getElementById("change-password-modal");
+        const errorMsg = document.getElementById("password-error");
+
+        document
+          .getElementById("change-password-btn")
+          .addEventListener("click", () => (modal.style.display = "block"));
+        document
+          .querySelector(".close")
+          .addEventListener("click", () => (modal.style.display = "none"));
+
+        form.addEventListener("submit", async (e) => {
           e.preventDefault();
+          const formData = new FormData(form);
 
-          const currentPassword =
-            document.getElementById("current-password").value;
-          const newPassword = document.getElementById("new-password").value;
-          const confirmPassword =
-            document.getElementById("confirm-password").value;
-
-          // Validate passwords match
-          if (newPassword !== confirmPassword) {
-            passwordError.textContent = "New passwords do not match";
-            passwordError.style.display = "block";
+          if (formData.get("newPassword") !== formData.get("confirmPassword")) {
+            errorMsg.textContent = "Passwords don't match";
             return;
           }
-
-          // Validate password complexity
-          const passwordRegex =
-            /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
-          if (!passwordRegex.test(newPassword)) {
-            passwordError.textContent =
-              "Password must contain at least 8 characters, including uppercase, lowercase, number, and special character";
-            passwordError.style.display = "block";
-            return;
-          }
-
-          const token = localStorage.getItem("token");
-          const user = JSON.parse(localStorage.getItem("user"));
 
           try {
             const response = await fetch(
@@ -420,116 +431,29 @@
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: JSON.stringify({
-                  currentPassword,
-                  newPassword,
+                  currentPassword: formData.get("currentPassword"),
+                  newPassword: formData.get("newPassword"),
                 }),
               }
             );
 
-            const data = await response.json();
-
-            if (response.ok) {
-              changePasswordModal.style.display = "none";
-              alert("Password changed successfully!");
-            } else {
-              passwordError.textContent =
-                data.message || "Failed to change password";
-              passwordError.style.display = "block";
+            if (!response.ok) {
+              const data = await response.json();
+              throw new Error(data.message || "Password change failed");
             }
+
+            alert("Password changed successfully");
+            modal.style.display = "none";
+            form.reset();
           } catch (error) {
-            console.error("Error changing password:", error);
-            passwordError.textContent =
-              "Error changing password. Please try again.";
-            passwordError.style.display = "block";
+            errorMsg.textContent = error.message;
+            console.error("Password change error:", error);
           }
         });
       }
-
-      async function loadItemResponses(itemId) {
-        const token = localStorage.getItem("token");
-
-        try {
-          const response = await fetch(
-            `http://localhost:5000/api/items/${itemId}/responses`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(
-              `Server returned ${response.status}: ${response.statusText}`
-            );
-          }
-
-          const data = await response.json();
-
-          // Display the responses
-          const responsesContainer = document.getElementById(
-            "responses-container"
-          );
-          responsesContainer.innerHTML = "";
-
-          if (data.data.length === 0) {
-            responsesContainer.innerHTML = "<p>No responses yet</p>";
-            return;
-          }
-
-          data.data.forEach((claim) => {
-            const claimElement = document.createElement("div");
-            claimElement.className = "claim-card";
-
-            let responsesHtml = "";
-            claim.responses.forEach((response) => {
-              responsesHtml += `
-          <div class="response-item">
-            <p><strong>Question:</strong> ${response.questionId.question}</p>
-            <p><strong>Answer:</strong> ${response.answer}</p>
-          </div>
-        `;
-            });
-
-            claimElement.innerHTML = `
-        <h3>Claim from ${claim.claimantId.name}</h3>
-        <p><strong>Status:</strong> ${claim.status}</p>
-        <div class="responses">
-          ${responsesHtml}
-        </div>
-        <div class="claim-actions">
-          <button class="approve-btn" data-id="${claim._id}">Approve</button>
-          <button class="reject-btn" data-id="${claim._id}">Reject</button>
-        </div>
-      `;
-
-            responsesContainer.appendChild(claimElement);
-          });
-
-          // Add event listeners for approve/reject buttons
-          document.querySelectorAll(".approve-btn").forEach((btn) => {
-            btn.addEventListener("click", () =>
-              approveRejectClaim(btn.dataset.id, "approved")
-            );
-          });
-
-          document.querySelectorAll(".reject-btn").forEach((btn) => {
-            btn.addEventListener("click", () =>
-              approveRejectClaim(btn.dataset.id, "rejected")
-            );
-          });
-        } catch (error) {
-          console.error("Error:", error);
-          document.getElementById(
-            "responses-container"
-          ).innerHTML = `<p class="error-message">Error loading responses: ${error.message}</p>`;
-        }
-      }
-
-      setupChangePassword();
     </script>
   </body>
 </html>

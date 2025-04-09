@@ -192,8 +192,8 @@ exports.getItemResponses = async (req, res) => {
 
     // Get responses from the Claim model
     const claims = await Claim.find({ itemId })
-      .populate("claimantId", "name email")
-      .select("responses status");
+      .populate("claimantId", "name email phone")
+      .select("responses status createdAt");
 
     res.status(200).json({
       success: true,
@@ -204,5 +204,23 @@ exports.getItemResponses = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+// Get items claimed by the authenticated user
+exports.getClaimedItems = async (req, res) => {
+  try {
+    const claimedItems = await Item.find({
+      claimedBy: req.user.id,
+      status: "claimed",
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: claimedItems.length,
+      data: claimedItems,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -32,6 +32,7 @@ const claimRoutes = require("./routes/claims"); // New claims routes
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api", claimRoutes); // Add claim routes under /api
+app.use("/api/claims", claimRoutes);
 
 /* // Configure logging to ignore static files
 app.use((req, res, next) => {

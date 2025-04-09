@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Post Lost Item - Lost and Found</title>
     <link rel="stylesheet" href="styles.css" />
+    <!-- <style>
+      /* Add this if not already in styles.css */
+      .user-pic,
+      .sub-menu-wrap {
+        display: none; /* Hide by default */
+      }
+      .sub-menu-wrap.open {
+        max-height: 400px; /* Or appropriate height */
+      }
+    </style> -->
   </head>
   <body>
     <header>
@@ -22,15 +32,18 @@
         <div class="sub-menu-wrap">
           <div class="sub-menu">
             <div class="user-info">
+              <!-- Add user profile image here if desired -->
               <h3>User</h3>
             </div>
             <hr />
-            <a href="account.html" class="sub-menu-link">
+            <a href="account.html" class="sub-menu-link" id="profile-link">
               <img src="images/profile.png" />
               <p>Your Profile</p>
+              <!-- Changed from Edit Profile -->
               <span>></span>
             </a>
-            <a href="#" class="sub-menu-link">
+            <!-- Ensure the ID is present -->
+            <a href="#" class="sub-menu-link" id="logout-link">
               <img src="images/logout.png" />
               <p>Logout</p>
               <span>></span>
@@ -43,9 +56,10 @@
     <main id="post-item">
       <h2>Post Lost Item</h2>
       <form id="post-form" class="post-form">
+        <!-- Type is already correctly set to 'lost' -->
         <input type="hidden" id="type" name="type" value="lost" />
 
-        Item Name:
+        <label for="name">Item Name:</label>
         <input
           type="text"
           id="name"
@@ -67,11 +81,15 @@
           <option value="keys">Keys</option>
           <option value="bags">Bags/Wallets</option>
           <option value="jewelry">Jewelry</option>
-          <option value="eyewear">Eyewear</option>
+          <option value="eyewear">Eyeglasses/Sunglasses</option>
+          <option value="umbrellas">Umbrellas</option>
+          <option value="chargers">Chargers</option>
+          <option value="headphones">Headphones</option>
+          <option value="water_bottles">Water Bottles</option>
           <option value="other">Other</option>
         </select>
 
-        Description:
+        <label for="description">Description:</label>
         <textarea
           id="description"
           name="description"
@@ -82,13 +100,14 @@
           maxlength="500"
         ></textarea>
 
-        Date Lost:
+        <label for="date-lost">Date Lost:</label>
+        <!-- Max date will be set by script -->
         <input type="date" id="date-lost" name="date" required max="" />
 
-        Time Lost:
+        <label for="time-lost">Time Lost:</label>
         <input type="time" id="time-lost" name="time" required />
 
-        Location Lost:
+        <label for="location">Location Lost:</label>
         <input
           type="text"
           id="location"
@@ -99,54 +118,102 @@
           maxlength="100"
         />
 
-        Upload Image:
+        <label for="image">Upload Image:</label>
         <input type="file" id="image" name="image" accept="image/*" />
 
-        <button type="submit">Submit</button>
+        <button type="submit">Submit Lost Item</button>
+        <!-- Updated button text -->
       </form>
-      <p id="postMessage"></p>
-
-      <script>
-        const dateInput = document.getElementById("date-lost");
-        const today = new Date().toISOString().split("T")[0];
-        dateInput.setAttribute("max", today);
-      </script>
+      <!-- Message area for success/error -->
+      <p id="postMessage" style="text-align: center; margin-top: 15px"></p>
     </main>
 
     <script>
-      // Check if user is logged in
+      // --- Global Variables & DOM Elements ---
+      const userPic = document.querySelector(".user-pic");
+      const subMenuWrap = document.querySelector(".sub-menu-wrap");
+      let logoutTimer; // For auto-logout
+
+      // --- Auto-Logout Functionality ---
+      function resetLogoutTimer() {
+        clearTimeout(logoutTimer);
+        logoutTimer = setTimeout(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          alert("You have been logged out due to inactivity.");
+          window.location.href = "login.html";
+        }, 300000); // 5 minutes
+      }
+
+      // --- Profile Submenu Toggle ---
+      if (userPic) {
+        userPic.addEventListener("click", () => {
+          if (subMenuWrap) {
+            subMenuWrap.classList.toggle("open");
+          }
+        });
+      }
+
+      // --- Page Initialization (DOM Ready) ---
       document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("token");
-        if (!token) {
-          window.location.href = "login.html";
-        }
+        let user = {};
 
-        // Set max date to today
-        const today = new Date().toISOString().split("T")[0];
-        document.getElementById("date-lost").setAttribute("max", today);
-      });
-
-      /*  // Toggle menu for mobile
-      document
-        .querySelector(".menu-icon")
-        .addEventListener("click", function () {
-          document.querySelector(".nav-list").classList.toggle("show");
-        }); */
-
-      // Logout functionality
-      document
-        .querySelector(".sub-menu-link:last-child")
-        .addEventListener("click", function (e) {
-          e.preventDefault();
+        try {
+          user = JSON.parse(localStorage.getItem("user") || "{}");
+        } catch (e) {
+          console.error("Error parsing user data:", e);
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           window.location.href = "login.html";
-        });
+          return;
+        }
 
-      // Form submission
-      document
-        .getElementById("post-form")
-        .addEventListener("submit", async function (e) {
+        // --- Authentication Check ---
+        if (!token) {
+          window.location.href = "login.html";
+          return; // Stop further execution
+        }
+
+        // --- Show Profile Elements ---
+        if (userPic) userPic.style.display = "block";
+        if (subMenuWrap) subMenuWrap.style.display = "block";
+
+        // --- Update User Name ---
+        const userNameElement = document.querySelector(".user-info h3");
+        if (userNameElement && user.name) {
+          userNameElement.textContent = user.name;
+        }
+
+        // --- Logout Button Functionality ---
+        const logoutLink = document.getElementById("logout-link");
+        if (logoutLink) {
+          logoutLink.addEventListener("click", function (e) {
+            e.preventDefault();
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "login.html";
+          });
+        }
+
+        // --- Start Auto-Logout Timer & Activity Listeners ---
+        resetLogoutTimer();
+        document.addEventListener("mousemove", resetLogoutTimer);
+        document.addEventListener("keypress", resetLogoutTimer);
+
+        // --- Page-Specific Setup (Post Lost Item Form) ---
+        // Set max date for 'date-lost' input to today
+        const dateInput = document.getElementById("date-lost");
+        if (dateInput) {
+          const today = new Date().toISOString().split("T")[0];
+          dateInput.setAttribute("max", today);
+        }
+      });
+
+      // --- Form Submission Handling ---
+      const postForm = document.getElementById("post-form");
+      if (postForm) {
+        postForm.addEventListener("submit", async function (e) {
           e.preventDefault();
 
           const token = localStorage.getItem("token");
@@ -157,6 +224,8 @@
 
           const formData = new FormData(this);
           const messageElement = document.getElementById("postMessage");
+          messageElement.textContent = "Submitting..."; // Provide feedback
+          messageElement.style.color = "black";
 
           try {
             const response = await fetch("http://localhost:5000/api/items", {
@@ -171,16 +240,16 @@
 
             if (response.ok) {
               messageElement.textContent =
-                "Item posted successfully! Redirecting...";
+                "Lost item reported successfully! Redirecting...";
               messageElement.style.color = "green";
 
-              // Redirect to lost items page
+              // Redirect to the lost items page
               setTimeout(() => {
                 window.location.href = "lost.html";
               }, 1500);
             } else {
               messageElement.textContent =
-                data.message || "Failed to post item";
+                data.message || "Failed to report lost item";
               messageElement.style.color = "red";
             }
           } catch (error) {
@@ -189,36 +258,7 @@
             console.error("Post error:", error);
           }
         });
-
-      /* // to handle file uploads
-      document
-        .getElementById("post-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const formData = new FormData(e.target);
-          const token = localStorage.getItem("token");
-
-          try {
-            const response = await fetch("http://localhost:5000/api/items", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              body: formData,
-            });
-
-            if (response.ok) {
-              alert("Item posted successfully!");
-              window.location.href = "items.html";
-            } else {
-              const data = await response.json();
-              alert(data.message || "Failed to post item");
-            }
-          } catch (error) {
-            console.error("Error:", error);
-            alert("An error occurred while posting the item");
-          }
-        }); */
+      }
     </script>
   </body>
 </html>

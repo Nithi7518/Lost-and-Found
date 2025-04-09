@@ -7,6 +7,7 @@ const {
   getUserItems,
   deleteItem,
   getItemResponses,
+  getClaimedItems,
 } = require("../controllers/itemController");
 const { protect } = require("../middleware/auth");
 const upload = require("../utils/upload");
@@ -28,6 +29,8 @@ router.get("/user", protect, getUserItems);
 
 router.delete("/:itemId", protect, deleteItem);
 
-router.get("/items/:itemId/responses", protect, getItemResponses);
+router.get("/:itemId/responses", protect, getItemResponses);
+
+router.get("/claimed", protect, getClaimedItems);
 
 module.exports = router;

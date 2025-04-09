@@ -144,11 +144,39 @@ exports.verifyClaim = async (req, res) => {
     claim.status = status;
     await claim.save();
 
+    // Add this section to update the item when a claim is approved
+    if (status === "approved") {
+      await Item.findByIdAndUpdate(claim.itemId, {
+        status: "claimed",
+        claimedBy: claim.claimantId,
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: `Claim ${
         status === "approved" ? "approved" : "rejected"
       } successfully`,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Add this new function to claimController.js
+exports.getUserClaimedItems = async (req, res) => {
+  try {
+    // Find items that the current user has claimed
+    const claimedItems = await Item.find({
+      claimedBy: req.user.id,
+      status: "claimed",
+    });
+
+    res.status(200).json({
+      success: true,
+      count: claimedItems.length,
+      data: claimedItems,
     });
   } catch (error) {
     console.error(error);

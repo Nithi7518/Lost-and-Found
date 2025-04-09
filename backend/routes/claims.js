@@ -19,4 +19,6 @@ router.get("/my-items-claims", protect, claimController.getMyItemClaims);
 // Verify a claim (approve/reject)
 router.put("/claims/:claimId/verify", protect, claimController.verifyClaim);
 
+router.get("/claimed-items", protect, claimController.getUserClaimedItems);
+
 module.exports = router;

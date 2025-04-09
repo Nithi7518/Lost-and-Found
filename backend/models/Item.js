@@ -22,7 +22,7 @@ const itemSchema = new mongoose.Schema(
       type: String,
       enum: [
         "electronics",
-        "personalbelongings",
+        "personal_belongings",
         "documents",
         "clothing",
         "accessories",
@@ -33,7 +33,7 @@ const itemSchema = new mongoose.Schema(
         "umbrellas",
         "chargers",
         "headphones",
-        "waterbottles",
+        "water_bottles",
         "other",
       ],
       required: true,
@@ -65,6 +65,10 @@ const itemSchema = new mongoose.Schema(
       type: String,
       enum: ["open", "claimed"],
       default: "open",
+    },
+    claimedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   { timestamps: true }
