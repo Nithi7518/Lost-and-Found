@@ -73,23 +73,23 @@
 
         <button type="submit">Sign Up</button>
 
+        <p id="signupMessage" style="color: red; margin: 10px 0"></p>
+
         <p>Already have an account? <a href="login.html">Login</a></p>
       </form>
     </main>
-    <!-- At the end of the body tag -->
-    <script type="module" src="js/register.js"></script>
 
     <script>
-      // Toggle menu for mobile
+      /* // Toggle menu for mobile
       document
         .querySelector(".menu-icon")
         .addEventListener("click", function () {
           document.querySelector(".nav-list").classList.toggle("show");
-        });
+        }); */
 
       // Signup form submission
       document
-        .getElementById("signupForm")
+        .getElementById("signup-form")
         .addEventListener("submit", async function (e) {
           e.preventDefault();
 
@@ -97,15 +97,15 @@
           const email = document.getElementById("email").value;
           const phone = document.getElementById("phone").value;
           const password = document.getElementById("password").value;
-          const confirmPassword =
-            document.getElementById("confirmPassword").value;
+          const confirmPassword = document.getElementById("confirm-pwd").value;
           const messageElement = document.getElementById("signupMessage");
 
           // Check if passwords match
           if (password !== confirmPassword) {
-            messageElement.textContent = "Passwords do not match";
+            messageElement.innerHTML = "Passwords do not match";
             messageElement.style.color = "red";
-            return;
+          } else {
+            messageElement.innerHTML = "";
           }
 
           try {

@@ -1,5 +1,6 @@
 const Item = require("../models/Item");
 const User = require("../models/User");
+const Claim = require("../models/Claim");
 const VerificationQuestion = require("../models/VerificationQuestion");
 
 // Create a new item (lost or found)
