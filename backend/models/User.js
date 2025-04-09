@@ -15,15 +15,17 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      "Invalid email format",
+      /^[a-zA-Z0-9._%+-]+@(vitstudent\.ac\.in|vit\.ac\.in)$/,
+      "Email must end with @vitstudent.ac.in or @vit.ac.in",
     ],
   },
   phone: {
     type: String,
     required: [true, "Phone number is required"],
     validate: {
-      validator: (v) => /^\d{10}$/.test(v),
+      validator: function (v) {
+        return /^\d{10}$/.test(v);
+      },
       message: "Phone number must be 10 digits",
     },
   },

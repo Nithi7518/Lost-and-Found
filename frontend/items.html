@@ -21,21 +21,15 @@
         <div class="sub-menu-wrap">
           <div class="sub-menu">
             <div class="user-info">
-              <img src="images/profile-pic.png" />
-              <h3>Tilak</h3>
+              <h3>User</h3>
             </div>
             <hr />
-            <a href="#" class="sub-menu-link">
+            <a href="account.html" class="sub-menu-link">
               <img src="images/profile.png" />
-              <p>Edit Profile</p>
+              <p>Your Profile</p>
               <span>></span>
             </a>
-            <a href="#" class="sub-menu-link">
-              <img src="images/settings.png" />
-              <p>Settings</p>
-              <span>></span>
-            </a>
-            <a href="#" class="sub-menu-link">
+            <a href="#" class="sub-menu-link" id="logout-link">
               <img src="images/logout.png" />
               <p>Logout</p>
               <span>></span>
@@ -96,28 +90,46 @@
     </main>
 
     <script src="js/claim.js"></script>
-
     <script>
-      // Check if user is logged in
+      // Check if user is logged in and handle profile display
       document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const userPic = document.querySelector(".user-pic");
+        const subMenuWrap = document.querySelector(".sub-menu-wrap");
+
         if (!token) {
+          // Redirect to login if not authenticated
           window.location.href = "login.html";
-        } else {
-          loadItems();
+          return;
         }
+
+        // User is logged in - show profile elements
+        if (userPic) userPic.style.display = "block";
+        if (subMenuWrap) subMenuWrap.style.display = "block";
+
+        // Update user name in submenu if it exists
+        const userNameElement = document.querySelector(".user-info h3");
+        if (userNameElement && user.name) {
+          userNameElement.textContent = user.name;
+        }
+
+        // Toggle submenu when profile pic is clicked
+        if (userPic) {
+          userPic.addEventListener("click", function () {
+            if (subMenuWrap) {
+              subMenuWrap.classList.toggle("open");
+            }
+          });
+        }
+
+        // Load items after authentication check
+        loadItems();
       });
 
-      /* // Toggle menu for mobile
+      // Logout functionality - use the correct ID
       document
-        .querySelector(".menu-icon")
-        .addEventListener("click", function () {
-          document.querySelector(".nav-list").classList.toggle("show");
-        }); */
-
-      // Logout functionality
-      document
-        .querySelector(".sub-menu-link:last-child")
+        .getElementById("logout-link")
         .addEventListener("click", function (e) {
           e.preventDefault();
           localStorage.removeItem("token");
@@ -132,13 +144,6 @@
           e.preventDefault();
           loadItems();
         });
-
-      /* // Category filter change
-      document
-        .getElementById("category-filter")
-        .addEventListener("change", function () {
-          loadItems();
-        }); */
 
       // Load items from API
       async function loadItems() {
@@ -221,8 +226,6 @@
           });
         }
       }
-
-      // searching
     </script>
   </body>
 </html>

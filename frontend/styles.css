@@ -74,6 +74,11 @@ main h2 {
   align-items: center;
 }
 
+.user-pic,
+.sub-menu-wrap {
+  display: none;
+}
+
 .user-pic {
   width: 40px;
   height: 40px;
@@ -107,13 +112,7 @@ main h2 {
 .user-info {
   display: flex;
   align-items: center;
-}
-
-.user-info img {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin-right: 15px;
+  justify-content: center;
 }
 
 .user-info h3 {
