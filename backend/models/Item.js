@@ -63,7 +63,7 @@ const itemSchema = new mongoose.Schema(
     image: String,
     status: {
       type: String,
-      enum: ["open", "claimed"],
+      enum: ["open", "pending_claim", "claimed"],
       default: "open",
     },
     claimedBy: {

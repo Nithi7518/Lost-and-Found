@@ -5,16 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Post Lost Item - Lost and Found</title>
     <link rel="stylesheet" href="styles.css" />
-    <!-- <style>
-      /* Add this if not already in styles.css */
-      .user-pic,
-      .sub-menu-wrap {
-        display: none; /* Hide by default */
-      }
-      .sub-menu-wrap.open {
-        max-height: 400px; /* Or appropriate height */
-      }
-    </style> -->
   </head>
   <body>
     <header>
@@ -32,17 +22,14 @@
         <div class="sub-menu-wrap">
           <div class="sub-menu">
             <div class="user-info">
-              <!-- Add user profile image here if desired -->
               <h3>User</h3>
             </div>
             <hr />
             <a href="account.html" class="sub-menu-link" id="profile-link">
               <img src="images/profile.png" />
               <p>Your Profile</p>
-              <!-- Changed from Edit Profile -->
               <span>></span>
             </a>
-            <!-- Ensure the ID is present -->
             <a href="#" class="sub-menu-link" id="logout-link">
               <img src="images/logout.png" />
               <p>Logout</p>
@@ -56,7 +43,6 @@
     <main id="post-item">
       <h2>Post Lost Item</h2>
       <form id="post-form" class="post-form">
-        <!-- Type is already correctly set to 'lost' -->
         <input type="hidden" id="type" name="type" value="lost" />
 
         <label for="name">Item Name:</label>
@@ -101,7 +87,6 @@
         ></textarea>
 
         <label for="date-lost">Date Lost:</label>
-        <!-- Max date will be set by script -->
         <input type="date" id="date-lost" name="date" required max="" />
 
         <label for="time-lost">Time Lost:</label>
@@ -122,19 +107,15 @@
         <input type="file" id="image" name="image" accept="image/*" />
 
         <button type="submit">Submit Lost Item</button>
-        <!-- Updated button text -->
       </form>
-      <!-- Message area for success/error -->
       <p id="postMessage" style="text-align: center; margin-top: 15px"></p>
     </main>
 
     <script>
-      // --- Global Variables & DOM Elements ---
       const userPic = document.querySelector(".user-pic");
       const subMenuWrap = document.querySelector(".sub-menu-wrap");
-      let logoutTimer; // For auto-logout
+      let logoutTimer;
 
-      // --- Auto-Logout Functionality ---
       function resetLogoutTimer() {
         clearTimeout(logoutTimer);
         logoutTimer = setTimeout(() => {
@@ -142,10 +123,9 @@
           localStorage.removeItem("user");
           alert("You have been logged out due to inactivity.");
           window.location.href = "login.html";
-        }, 300000); // 5 minutes
+        }, 300000);
       }
 
-      // --- Profile Submenu Toggle ---
       if (userPic) {
         userPic.addEventListener("click", () => {
           if (subMenuWrap) {
@@ -154,7 +134,6 @@
         });
       }
 
-      // --- Page Initialization (DOM Ready) ---
       document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("token");
         let user = {};
@@ -169,23 +148,19 @@
           return;
         }
 
-        // --- Authentication Check ---
         if (!token) {
           window.location.href = "login.html";
-          return; // Stop further execution
+          return;
         }
 
-        // --- Show Profile Elements ---
         if (userPic) userPic.style.display = "block";
         if (subMenuWrap) subMenuWrap.style.display = "block";
 
-        // --- Update User Name ---
         const userNameElement = document.querySelector(".user-info h3");
         if (userNameElement && user.name) {
           userNameElement.textContent = user.name;
         }
 
-        // --- Logout Button Functionality ---
         const logoutLink = document.getElementById("logout-link");
         if (logoutLink) {
           logoutLink.addEventListener("click", function (e) {
@@ -196,13 +171,10 @@
           });
         }
 
-        // --- Start Auto-Logout Timer & Activity Listeners ---
         resetLogoutTimer();
         document.addEventListener("mousemove", resetLogoutTimer);
         document.addEventListener("keypress", resetLogoutTimer);
 
-        // --- Page-Specific Setup (Post Lost Item Form) ---
-        // Set max date for 'date-lost' input to today
         const dateInput = document.getElementById("date-lost");
         if (dateInput) {
           const today = new Date().toISOString().split("T")[0];
@@ -210,7 +182,6 @@
         }
       });
 
-      // --- Form Submission Handling ---
       const postForm = document.getElementById("post-form");
       if (postForm) {
         postForm.addEventListener("submit", async function (e) {
@@ -224,7 +195,7 @@
 
           const formData = new FormData(this);
           const messageElement = document.getElementById("postMessage");
-          messageElement.textContent = "Submitting..."; // Provide feedback
+          messageElement.textContent = "Submitting...";
           messageElement.style.color = "black";
 
           try {
@@ -243,7 +214,6 @@
                 "Lost item reported successfully! Redirecting...";
               messageElement.style.color = "green";
 
-              // Redirect to the lost items page
               setTimeout(() => {
                 window.location.href = "lost.html";
               }, 1500);

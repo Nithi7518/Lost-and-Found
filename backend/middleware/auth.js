@@ -2,36 +2,48 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 exports.protect = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "No token, authorization denied",
+    });
+  }
+
   try {
-    // 1. Get token from header
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "No token, authorization denied",
-      });
-    }
-
-    // 2. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 3. Get user without password for general protection
-    const user = await User.findById(decoded.id);
+    req.user = await User.findById(decoded.id).select("-password");
 
-    if (!user) {
+    if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: "User not found",
+        message: "User belonging to this token no longer exists.",
       });
     }
 
-    req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({
+    let message = "Token is not valid";
+    if (error.name === "JsonWebTokenError") {
+      message = "Invalid token signature.";
+    } else if (error.name === "TokenExpiredError") {
+      message = "Token has expired, please log in again.";
+    } else {
+      message = "Authorization failed due to token error.";
+    }
+
+    return res.status(401).json({
       success: false,
-      message: "Token is not valid",
+      message: message,
     });
   }
 };

@@ -50,14 +50,6 @@
     </main>
 
     <script>
-      /* // Toggle menu for mobile
-      document
-        .querySelector(".menu-icon")
-        .addEventListener("click", function () {
-          document.querySelector(".nav-list").classList.toggle("show");
-        }); */
-
-      // Login form submission
       document
         .querySelector(".auth-form")
         .addEventListener("submit", async function (e) {
@@ -82,14 +74,12 @@
             const data = await response.json();
 
             if (response.ok) {
-              // Store token and user info in localStorage
               localStorage.setItem("token", data.token);
               localStorage.setItem("user", JSON.stringify(data.user));
 
               messageElement.textContent = "Login successful! Redirecting...";
               messageElement.style.color = "green";
 
-              // Redirect to home page after successful login
               setTimeout(() => {
                 window.location.href = "home.html";
               }, 1500);

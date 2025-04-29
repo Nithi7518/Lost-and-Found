@@ -1,7 +1,6 @@
 import { createItem, isAuthenticated } from "./api.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Check if user is authenticated
   if (!isAuthenticated()) {
     window.location.href = "/login.html";
     return;
@@ -13,11 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
     postForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Determine if this is a lost or found item form
       const isLostForm = window.location.pathname.includes("lost");
       const type = isLostForm ? "lost" : "found";
 
-      // Get form values
       const itemData = {
         name: document.getElementById("name").value,
         category: document.getElementById("category").value,
@@ -26,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
         type,
       };
 
-      // Add date and time based on form type
       if (isLostForm) {
         itemData.date = document.getElementById("date-lost").value;
         itemData.time = document.getElementById("time-lost").value;
@@ -35,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
         itemData.time = document.getElementById("time-found").value;
       }
 
-      // Add image if selected
       const imageInput = document.getElementById("image");
       if (imageInput.files.length > 0) {
         itemData.image = imageInput.files[0];

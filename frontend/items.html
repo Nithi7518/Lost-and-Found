@@ -53,45 +53,11 @@
         </p>
       </div>
 
-      <div class="items-container">
-        <!-- <div class="item-card">
-          <img src="images/wallet.png" alt="Found Wallet" />
-          <h3>Found Wallet</h3>
-          <p>Category: Bags/Wallets</p>
-          <p>Location: City Street Bench</p>
-          <p>Date: 2025-02-26</p>
-          <p>Time: 14:30</p>
-        </div>
-        <div class="item-card">
-          <img src="images/keys.png" alt="Found Keys" />
-          <h3>Found Keys</h3>
-          <p>Category: Keys</p>
-          <p>Location: Park</p>
-          <p>Date: 2025-02-25</p>
-          <p>Time: 10:15</p>
-        </div>
-        <div class="item-card">
-          <img src="images/phone.png" alt="Found Smartphone" />
-          <h3>Found Smartphone</h3>
-          <p>Category: Electronics</p>
-          <p>Location: Cafeteria</p>
-          <p>Date: 2025-02-24</p>
-          <p>Time: 12:45</p>
-        </div>
-        <div class="item-card">
-          <img src="images/glasses.png" alt="Found Eyeglasses" />
-          <h3>Found Eyeglasses</h3>
-          <p>Category: Eyewear</p>
-          <p>Location: Library</p>
-          <p>Date: 2025-02-23</p>
-          <p>Time: 16:20</p>
-        </div> -->
-      </div>
+      <div class="items-container"></div>
     </main>
 
     <script src="js/claim.js"></script>
     <script>
-      // Check if user is logged in and handle profile display
       document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("token");
         const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -99,22 +65,18 @@
         const subMenuWrap = document.querySelector(".sub-menu-wrap");
 
         if (!token) {
-          // Redirect to login if not authenticated
           window.location.href = "login.html";
           return;
         }
 
-        // User is logged in - show profile elements
         if (userPic) userPic.style.display = "block";
         if (subMenuWrap) subMenuWrap.style.display = "block";
 
-        // Update user name in submenu if it exists
         const userNameElement = document.querySelector(".user-info h3");
         if (userNameElement && user.name) {
           userNameElement.textContent = user.name;
         }
 
-        // Toggle submenu when profile pic is clicked
         if (userPic) {
           userPic.addEventListener("click", function () {
             if (subMenuWrap) {
@@ -123,11 +85,9 @@
           });
         }
 
-        // Load items after authentication check
         loadItems();
       });
 
-      // Logout functionality - use the correct ID
       document
         .getElementById("logout-link")
         .addEventListener("click", function (e) {
@@ -137,7 +97,6 @@
           window.location.href = "login.html";
         });
 
-      // Search form submission
       document
         .getElementById("search-bar")
         .addEventListener("submit", function (e) {
@@ -145,7 +104,6 @@
           loadItems();
         });
 
-      // Load items from API
       async function loadItems() {
         const searchQuery = document.getElementById("search-input").value || "";
         const token = localStorage.getItem("token");
@@ -181,47 +139,56 @@
         }
       }
 
-      // Display items in the container
       function displayItems(items) {
         const container = document.querySelector(".items-container");
         const notFoundMessage = document.getElementById("item-not-found");
 
-        // Always show the "not found" message
-        notFoundMessage.style.display = "block";
+        if (notFoundMessage) {
+          notFoundMessage.style.display = "block";
+        }
 
         container.innerHTML = "";
 
         if (!items || items.length === 0) {
-          container.innerHTML = "<p>No items found matching your criteria.</p>";
+          container.innerHTML = "<p>No found items match your criteria.</p>";
         } else {
           items.forEach((item) => {
             const itemCard = document.createElement("div");
             itemCard.className = "item-card";
 
-            // Format date
-            const itemDate = new Date(item.date).toLocaleDateString();
+            const itemDate = new Date(item.date).toLocaleDateString("en-CA");
 
-            // Use placeholder image instead of actual image
             itemCard.innerHTML = `
-        <div class="item-placeholder">
-          <p>Image hidden until verified</p>
-        </div>
-        <h3>${item.name}</h3>
-        <p><strong>Category:</strong> ${item.category}</p>
-        <p><strong>Description:</strong> ${item.description}</p>
-        <p><strong>Location:</strong> ${item.location}</p>
-        <p><strong>Date Found:</strong> ${itemDate}</p>
-        <p><strong>Time:</strong> ${item.time}</p>
-        <button class="claim-btn" data-item-id="${item._id}" data-item-name="${item.name}">Claim This Item</button>
-      `;
+              <h3>${item.name || "N/A"}</h3>
+              <p><strong>Category:</strong> ${
+                item.category?.replace("_", " ") || "N/A"
+              }</p>
+              <p><strong>Description:</strong> ${item.description || "N/A"}</p>
+              <p><strong>Location:</strong> ${item.location || "N/A"}</p>
+              <p><strong>Date Found:</strong> ${itemDate}</p>
+              <p><strong>Time:</strong> ${item.time || "N/A"}</p>
+              <button class="claim-btn" data-item-id="${
+                item._id
+              }" data-item-name="${
+              item.name || "this item"
+            }">Claim This Item</button>
+            `;
 
             container.appendChild(itemCard);
           });
 
-          // Add claim button event listeners
           document.querySelectorAll(".claim-btn").forEach((btn) => {
             btn.addEventListener("click", () => {
-              startClaimProcess(btn.dataset.itemId, btn.dataset.itemName);
+              if (typeof startClaimProcess === "function") {
+                startClaimProcess(btn.dataset.itemId, btn.dataset.itemName);
+              } else {
+                console.error(
+                  "startClaimProcess function not found. Ensure claim.js is correctly loaded."
+                );
+                alert(
+                  "Error: Could not initiate claim process. Script missing."
+                );
+              }
             });
           });
         }

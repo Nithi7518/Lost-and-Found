@@ -5,12 +5,10 @@ const User = require("../models/User");
 const path = require("path");
 const fs = require("fs");
 
-// Get verification questions for an item
 exports.getVerificationQuestions = async (req, res) => {
   try {
     const itemId = req.params.itemId;
 
-    // Check if item exists
     const item = await Item.findById(itemId);
     if (!item) {
       return res
@@ -18,7 +16,6 @@ exports.getVerificationQuestions = async (req, res) => {
         .json({ success: false, message: "Item not found" });
     }
 
-    // Get questions without answers
     const verificationData = await VerificationQuestion.findOne({ itemId });
     if (!verificationData) {
       return res.status(404).json({
@@ -27,7 +24,6 @@ exports.getVerificationQuestions = async (req, res) => {
       });
     }
 
-    // Return questions without answers
     const questionsWithoutAnswers = verificationData.questions.map((q) => ({
       id: q._id,
       question: q.question,
@@ -35,18 +31,16 @@ exports.getVerificationQuestions = async (req, res) => {
 
     res.status(200).json({ success: true, questions: questionsWithoutAnswers });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching verification questions:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Submit a claim with responses to verification questions
 exports.submitClaim = async (req, res) => {
   try {
     const { itemId } = req.params;
-    const { responses } = req.body;
+    const { responses: userResponses } = req.body;
 
-    // Check if item exists
     const item = await Item.findById(itemId);
     if (!item) {
       return res
@@ -54,7 +48,24 @@ exports.submitClaim = async (req, res) => {
         .json({ success: false, message: "Item not found" });
     }
 
-    // Check if user has already submitted a claim for this item
+    if (item.user.toString() === req.user.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot claim an item that you posted.",
+      });
+    }
+    const verificationData = await VerificationQuestion.findOne({ itemId });
+    if (!verificationData) {
+      return res.status(404).json({
+        success: false,
+        message: "Verification questions for this item could not be found.",
+      });
+    }
+    const questionTextMap = verificationData.questions.reduce((map, q) => {
+      map[q._id.toString()] = q.question;
+      return map;
+    }, {});
+
     const existingClaim = await Claim.findOne({
       itemId,
       claimantId: req.user.id,
@@ -68,18 +79,54 @@ exports.submitClaim = async (req, res) => {
       });
     }
 
-    // Create a new claim
+    const formattedResponses = userResponses
+      .map((userResponse) => {
+        const questionText = questionTextMap[userResponse.questionId];
+
+        if (!questionText) {
+          console.warn(
+            `Question text not found for ID: ${userResponse.questionId} during claim submission for item ${itemId}`
+          );
+        }
+
+        return {
+          questionId: userResponse.questionId,
+          question: questionText || "Question not found",
+          answer: userResponse.response,
+        };
+      })
+      .filter((response) => response.question !== "Question not found");
+
+    if (formattedResponses.length !== userResponses.length) {
+      console.warn(
+        `Some responses were discarded for item ${itemId} claim due to missing original questions.`
+      );
+    }
+    if (formattedResponses.length === 0 && userResponses.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Could not match any of your answers to the item's verification questions. Please try again or contact support.",
+      });
+    }
     const newClaim = new Claim({
       itemId,
       claimantId: req.user.id,
-      responses,
+      responses: formattedResponses,
     });
 
     await newClaim.save();
 
-    // Notify item owner (this would be implemented with email/notifications)
     const itemOwner = await User.findById(item.user);
-    console.log(`Notification would be sent to ${itemOwner.email}`);
+    if (itemOwner) {
+      console.log(
+        `Notification would be sent to ${itemOwner.email} regarding claim for item ${item.name}`
+      );
+    } else {
+      console.warn(
+        `Item owner not found for item ${itemId} during claim submission.`
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -87,32 +134,63 @@ exports.submitClaim = async (req, res) => {
         "Claim submitted successfully. The item owner will review your answers.",
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error submitting claim:", error);
+    res.status(500).json({
+      success: false,
+      message: "An internal server error occurred while submitting the claim.",
+    });
   }
 };
 
-// Get pending claims for items I've posted (item owner)
+exports.getMySubmittedClaims = async (req, res) => {
+  try {
+    const submittedClaims = await Claim.find({ claimantId: req.user.id })
+      .populate(
+        "itemId",
+        "name category description date time location image type"
+      )
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: submittedClaims.length,
+      data: submittedClaims,
+    });
+  } catch (error) {
+    console.error("Error fetching user's submitted claims:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch submitted claims" });
+  }
+};
+
 exports.getMyItemClaims = async (req, res) => {
   try {
-    // Find items posted by the current user
-    const myItems = await Item.find({ user: req.user.id });
+    const myItems = await Item.find({ user: req.user.id }).select("_id");
     const myItemIds = myItems.map((item) => item._id);
 
-    // Get pending claims for those items
     const pendingClaims = await Claim.find({
       itemId: { $in: myItemIds },
       status: "pending",
-    }).populate("claimantId", "name email");
+    })
+      .populate("claimantId", "name email phone")
+      .populate("itemId", "name")
+      .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, claims: pendingClaims });
+    res.status(200).json({
+      success: true,
+      count: pendingClaims.length,
+      data: pendingClaims,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error in getMyItemClaims controller:", error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to get item claims: ${error.message}`,
+    });
   }
 };
 
-// Verify claim answers (item owner)
 exports.verifyClaim = async (req, res) => {
   try {
     const { claimId } = req.params;
@@ -121,7 +199,7 @@ exports.verifyClaim = async (req, res) => {
     if (!["approved", "rejected"].includes(status)) {
       return res
         .status(400)
-        .json({ success: false, message: "Invalid status" });
+        .json({ success: false, message: "Invalid status provided" });
     }
 
     const claim = await Claim.findById(claimId);
@@ -131,20 +209,30 @@ exports.verifyClaim = async (req, res) => {
         .json({ success: false, message: "Claim not found" });
     }
 
-    // Verify that the current user owns the item
-    const item = await Item.findById(claim.itemId);
-    if (item.user.toString() !== req.user.id) {
-      return res.status(403).json({
+    if (claim.status !== "pending") {
+      return res.status(400).json({
         success: false,
-        message: "You don't have permission to verify this claim",
+        message: `This claim has already been ${claim.status}.`,
       });
     }
 
-    // Update claim status
+    const item = await Item.findById(claim.itemId);
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Associated item not found",
+      });
+    }
+    if (item.user.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to verify this claim",
+      });
+    }
+
     claim.status = status;
     await claim.save();
 
-    // Add this section to update the item when a claim is approved
     if (status === "approved") {
       await Item.findByIdAndUpdate(claim.itemId, {
         status: "claimed",
@@ -154,24 +242,31 @@ exports.verifyClaim = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `Claim ${
-        status === "approved" ? "approved" : "rejected"
-      } successfully`,
+      message: `Claim ${status} successfully`,
+      updatedClaim: claim,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error verifying claim:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Add this new function to claimController.js
-exports.getUserClaimedItems = async (req, res) => {
+exports.getClaimedItemsDetails = async (req, res) => {
   try {
-    // Find items that the current user has claimed
-    const claimedItems = await Item.find({
-      claimedBy: req.user.id,
-      status: "claimed",
+    const approvedClaims = await Claim.find({
+      claimantId: req.user.id,
+      status: "approved",
+    }).populate({
+      path: "itemId",
+      populate: {
+        path: "user",
+        select: "name email phone",
+      },
     });
+
+    const claimedItems = approvedClaims
+      .map((claim) => claim.itemId)
+      .filter((item) => item != null);
 
     res.status(200).json({
       success: true,
@@ -179,31 +274,30 @@ exports.getUserClaimedItems = async (req, res) => {
       data: claimedItems,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching user's claimed items details:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Check if user has access to view an image
 exports.hasImageAccess = async (userId, itemId) => {
   try {
     const item = await Item.findById(itemId);
 
-    // Case 1: User is the item owner
+    if (!item) return false;
+
     if (item.user.toString() === userId) {
       return true;
     }
 
-    // Case 2: User has an approved claim
     const approvedClaim = await Claim.findOne({
-      itemId,
+      itemId: itemId,
       claimantId: userId,
       status: "approved",
     });
 
     return !!approvedClaim;
   } catch (error) {
-    console.error(error);
+    console.error("Error checking image access:", error);
     return false;
   }
 };

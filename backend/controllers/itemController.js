@@ -3,14 +3,12 @@ const User = require("../models/User");
 const Claim = require("../models/Claim");
 const VerificationQuestion = require("../models/VerificationQuestion");
 
-// Create a new item (lost or found)
 exports.createItem = async (req, res) => {
   try {
     const { name, category, description, date, time, location, type } =
       req.body;
 
-    // Create new item
-    const newItem = new Item({
+    const newItemData = {
       name,
       category,
       description,
@@ -19,42 +17,48 @@ exports.createItem = async (req, res) => {
       location,
       type,
       user: req.user.id,
-      image: req.file ? req.file.filename : "default.jpg",
-    });
+      image: req.file ? req.file.filename : null,
+    };
 
+    const newItem = new Item(newItemData);
     const savedItem = await newItem.save();
 
-    // Handle verification questions for found items
     if (type === "found") {
       if (!req.body.questions) {
         return res.status(400).json({
           success: false,
-          message: "Verification questions required for found items",
+          message: "Verification questions are required for found items.",
         });
       }
 
       let questions;
       try {
         questions = JSON.parse(req.body.questions);
+        if (!Array.isArray(questions) || questions.length === 0) {
+          throw new Error("Invalid or empty questions array.");
+        }
+        if (questions.some((q) => !q.question || !q.answer)) {
+          throw new Error(
+            "Each question must have a 'question' and 'answer' field."
+          );
+        }
       } catch (e) {
         return res.status(400).json({
           success: false,
-          message: "Invalid questions format",
+          message: `Invalid questions format: ${e.message}`,
         });
       }
 
       const verificationQuestions = new VerificationQuestion({
         itemId: savedItem._id,
         questions: questions.map((q) => ({
-          question: q.question,
-          answer: q.answer,
+          question: q.question.trim(),
+          answer: q.answer.trim(),
         })),
       });
-
       await verificationQuestions.save();
     }
 
-    // Update user's items
     await User.findByIdAndUpdate(req.user.id, {
       $push: { itemsReported: savedItem._id },
     });
@@ -67,50 +71,47 @@ exports.createItem = async (req, res) => {
     console.error("Item creation error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: `Failed to create item: ${error.message}`,
     });
   }
 };
 
-// Get all items with search and filter
 exports.getItems = async (req, res) => {
   try {
     const { search, category, type } = req.query;
 
-    // Build query object
     const query = {};
 
-    // Add type filter (lost or found)
     if (type) {
       query.type = type;
     }
 
-    // Add category filter
     if (category && category !== "All Categories") {
       query.category = category;
     }
 
-    // Add search functionality
     if (search) {
+      const searchRegex = { $regex: search, $options: "i" };
       query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { location: { $regex: search, $options: "i" } },
+        { name: searchRegex },
+        { description: searchRegex },
+        { location: searchRegex },
       ];
     }
 
-    // Execute query
     const items = await Item.find(query)
       .populate("user", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, count: items.length, data: items });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Get items error:", error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to get items: ${error.message}`,
+    });
   }
 };
-
-// In controllers/itemController.js
 exports.getUserItems = async (req, res) => {
   try {
     const { type } = req.query;
@@ -128,51 +129,19 @@ exports.getUserItems = async (req, res) => {
       data: items,
     });
   } catch (error) {
+    console.error("Get user items error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: `Failed to get user items: ${error.message}`,
     });
   }
 };
 
 exports.deleteItem = async (req, res) => {
   try {
-    const item = await Item.findById(req.params.itemId);
+    const itemId = req.params.itemId;
+    const userId = req.user.id;
 
-    if (!item) {
-      return res.status(404).json({
-        success: false,
-        message: "Item not found",
-      });
-    }
-
-    // Check if user owns this item
-    if (item.user.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: "You are not authorized to delete this item",
-      });
-    }
-
-    await Item.findByIdAndDelete(req.params.itemId);
-
-    res.status(200).json({
-      success: true,
-      message: "Item deleted successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-exports.getItemResponses = async (req, res) => {
-  try {
-    const { itemId } = req.params;
-
-    // Find the item
     const item = await Item.findById(itemId);
 
     if (!item) {
@@ -182,38 +151,88 @@ exports.getItemResponses = async (req, res) => {
       });
     }
 
-    // Check if user is the owner of the item
-    if (item.user.toString() !== req.user.id) {
+    if (item.user.toString() !== userId) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to view responses for this item",
+        message: "You are not authorized to delete this item.",
       });
     }
 
-    // Get responses from the Claim model
-    const claims = await Claim.find({ itemId })
+    await Claim.deleteMany({ itemId: itemId });
+    await VerificationQuestion.deleteOne({ itemId: itemId });
+
+    await Item.findByIdAndDelete(itemId);
+
+    await User.findByIdAndUpdate(userId, { $pull: { itemsReported: itemId } });
+
+    res.status(200).json({
+      success: true,
+      message: "Item and associated data deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete item error:", error);
+    if (error.name === "CastError") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid item ID format" });
+    }
+    res.status(500).json({
+      success: false,
+      message: `Failed to delete item: ${error.message}`,
+    });
+  }
+};
+
+exports.getItemResponses = async (req, res) => {
+  try {
+    const itemId = req.params.itemId;
+    const userId = req.user.id;
+
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    if (item.user.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view responses for this item.",
+      });
+    }
+    const claims = await Claim.find({ itemId: itemId })
       .populate("claimantId", "name email phone")
-      .select("responses status createdAt");
+      .select("claimantId responses status createdAt")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       data: claims,
     });
   } catch (error) {
+    console.error("Get item responses error:", error);
+    if (error.name === "CastError") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid item ID format" });
+    }
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: `Failed to get item responses: ${error.message}`,
     });
   }
 };
 
-// Get items claimed by the authenticated user
 exports.getClaimedItems = async (req, res) => {
   try {
     const claimedItems = await Item.find({
       claimedBy: req.user.id,
       status: "claimed",
-    }).sort({ createdAt: -1 });
+    })
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -221,6 +240,93 @@ exports.getClaimedItems = async (req, res) => {
       data: claimedItems,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Get claimed items error:", error);
+    res.status(500).json({
+      success: false,
+      message: `Failed to get claimed items: ${error.message}`,
+    });
+  }
+};
+
+exports.getClaimedItemDetails = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const userId = req.user.id;
+
+    const item = await Item.findById(itemId).populate(
+      "user",
+      "name email phone"
+    );
+
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    if (item.status !== "claimed" || item.claimedBy?.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view these claimed item details.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: item._id,
+        name: item.name,
+        category: item.category,
+        description: item.description,
+        date: item.date,
+        time: item.time,
+        location: item.location,
+        status: item.status,
+        image: item.image,
+        postedBy: {
+          name: item.user.name,
+          email: item.user.email,
+          phone: item.user.phone,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get claimed item details error:", error);
+    if (error.name === "CastError") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid item ID format" });
+    }
+    res.status(500).json({
+      success: false,
+      message: `Failed to get claimed item details: ${error.message}`,
+    });
+  }
+};
+
+exports.getItemDetails = async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.itemId).populate(
+      "user",
+      "name email phone"
+    );
+
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found" });
+    }
+
+    res.status(200).json({ success: true, data: item });
+  } catch (error) {
+    console.error("Get item details error:", error);
+    if (error.name === "CastError") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid item ID format" });
+    }
+    res
+      .status(500)
+      .json({ success: false, message: "Server error fetching item details" });
   }
 };

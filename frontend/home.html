@@ -124,45 +124,35 @@
     <script>
       let logoutTimer;
 
-      // Function to reset the logout timer
       function resetLogoutTimer() {
         clearTimeout(logoutTimer);
-
-        // Start a new timer for logout after 5 minutes
         logoutTimer = setTimeout(() => {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           alert("You have been logged out due to inactivity.");
           window.location.href = "login.html";
-        }, 300000); // 5 minutes in milliseconds
+        }, 300000);
       }
 
-      // Start the initial timer
       resetLogoutTimer();
 
-      // Add event listeners for user activity
       document.addEventListener("mousemove", resetLogoutTimer);
       document.addEventListener("keypress", resetLogoutTimer);
 
-      // Set a timeout for logout after 5 minutes (300,000 milliseconds)
       setTimeout(() => {
-        // Clear token and user data from localStorage
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
-        // Notify the user and redirect to the login page
         alert("You have been logged out due to inactivity.");
         window.location.href = "login.html";
-      }, 300000); // 5 minutes in milliseconds
+      }, 300000);
 
       const userPic = document.querySelector(".user-pic");
       const subMenuWrap = document.querySelector(".sub-menu-wrap");
 
       userPic.addEventListener("click", () => {
-        subMenuWrap.classList.toggle("open"); // Toggle the "open" class
+        subMenuWrap.classList.toggle("open");
       });
 
-      // Check if user is logged in
       document.addEventListener("DOMContentLoaded", function () {
         const token = localStorage.getItem("token");
         const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -172,30 +162,24 @@
         const loginLink = document.querySelector('a[href="login.html"]');
 
         if (token && user.id) {
-          // User is logged in - show profile, hide login/signup
           userPic.style.display = "block";
           subMenuWrap.style.display = "block";
 
-          // Update user name in submenu
           const userNameElement = document.querySelector(".user-info h3");
           if (userNameElement) {
             userNameElement.textContent = user.name || "User";
           }
 
-          // Hide signup and login links
           if (signupLink) signupLink.style.display = "none";
           if (loginLink) loginLink.style.display = "none";
         } else {
-          // User is not logged in - hide profile, show login/signup
           if (userPic) userPic.style.display = "none";
           if (subMenuWrap) subMenuWrap.style.display = "none";
 
-          // Show signup and login links
           if (signupLink) signupLink.style.display = "block";
           if (loginLink) loginLink.style.display = "block";
         }
 
-        // Add logout functionality
         const logoutLink = document.getElementById("logout-link");
         if (logoutLink) {
           logoutLink.addEventListener("click", function (e) {
