@@ -8,90 +8,152 @@ const fs = require("fs");
 
 const app = express();
 
-const connectDB = require("./config/db"); // Import the connectDB function
+const connectDB = require("./config/db");
 
-// Connect to MongoDB
 connectDB();
 
-// Create private uploads directory if it doesn't exist
+const publicUploadDir = path.join(__dirname, "../frontend/public/uploads");
+if (!fs.existsSync(publicUploadDir)) {
+  fs.mkdirSync(publicUploadDir, { recursive: true });
+  console.log(`[App.js] Created directory: ${publicUploadDir}`);
+}
+
 const privateUploadsDir = path.join(__dirname, "private/uploads");
 if (!fs.existsSync(privateUploadsDir)) {
   fs.mkdirSync(privateUploadsDir, { recursive: true });
+  console.log(`[App.js] Created directory: ${privateUploadsDir}`);
 }
 
-// Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-// Routes
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../frontend/public/uploads"))
+);
+
 const authRoutes = require("./routes/auth");
 const itemRoutes = require("./routes/items");
-const claimRoutes = require("./routes/claims"); // New claims routes
+const claimRoutes = require("./routes/claims");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
-app.use("/api", claimRoutes); // Add claim routes under /api
 app.use("/api/claims", claimRoutes);
 
-/* // Configure logging to ignore static files
-app.use((req, res, next) => {
-  const ignoredExtensions = [".css", ".js", ".png", ".jpg", ".ico"];
-  const isStaticFile = ignoredExtensions.some((ext) => req.url.endsWith(ext));
-
-  if (!isStaticFile) {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  }
-  next();
-}); */
-
-// Secure image endpoint - only accessible to verified users
 app.get("/secure-image/:filename", async (req, res) => {
   try {
     const { filename } = req.params;
     const token = req.query.token;
 
     if (!token) {
+      console.log(`Secure Image: No token provided for ${filename}`);
       return res
         .status(401)
-        .sendFile(path.join(__dirname, "public/images/placeholder.jpg"));
+        .sendFile(
+          path.join(__dirname, "../frontend/public/images/placeholder.jpg"),
+          (err) => {
+            if (err) {
+              console.error("Error sending placeholder:", err);
+              res.status(404).send("Placeholder not found");
+            }
+          }
+        );
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (verifyError) {
+      console.log(
+        `Secure Image: Invalid token for ${filename}`,
+        verifyError.message
+      );
+      return res
+        .status(403)
+        .sendFile(
+          path.join(__dirname, "../frontend/public/images/placeholder.jpg"),
+          (err) => {
+            if (err) res.status(404).send("Placeholder not found");
+          }
+        );
+    }
 
-    // Extract itemId from filename (assuming format: "itemId-timestamp.jpg")
-    const itemId = filename.split("-")[0];
+    const itemIdMatch = filename.match(/^([a-f\d]{24})/i);
+    const itemId = itemIdMatch ? itemIdMatch[1] : null;
 
-    // Check if user has access to the image
+    if (!itemId) {
+      console.log(`Secure Image: Could not extract itemId from ${filename}`);
+      return res
+        .status(400)
+        .sendFile(
+          path.join(__dirname, "../frontend/public/images/placeholder.jpg"),
+          (err) => {
+            if (err) res.status(404).send("Placeholder not found");
+          }
+        );
+    }
+
     const { hasImageAccess } = require("./controllers/claimController");
     const hasAccess = await hasImageAccess(decoded.id, itemId);
 
-    if (hasAccess) {
-      return res.sendFile(path.join(__dirname, "private/uploads", filename));
+    const imagePath = path.join(privateUploadsDir, filename);
+
+    if (hasAccess && fs.existsSync(imagePath)) {
+      console.log(
+        `Secure Image: Access granted for ${filename} to user ${decoded.id}`
+      );
+      return res.sendFile(imagePath);
     } else {
+      if (!hasAccess)
+        console.log(
+          `Secure Image: Access denied for ${filename} to user ${decoded.id}`
+        );
+      if (!fs.existsSync(imagePath))
+        console.log(`Secure Image: File not found at ${imagePath}`);
+
       return res
         .status(403)
-        .sendFile(path.join(__dirname, "public/images/placeholder.jpg"));
+        .sendFile(
+          path.join(__dirname, "../frontend/public/images/placeholder.jpg"),
+          (err) => {
+            if (err) res.status(404).send("Placeholder not found");
+          }
+        );
     }
   } catch (error) {
-    console.error("Image access error:", error);
+    console.error("Secure Image Endpoint Error:", error);
     return res
       .status(500)
-      .sendFile(path.join(__dirname, "public/images/placeholder.jpg"));
+      .sendFile(
+        path.join(__dirname, "../frontend/public/images/placeholder.jpg"),
+        (err) => {
+          if (err) res.status(500).send("Server error retrieving image");
+        }
+      );
   }
 });
 
-// Serve frontend files
 app.use(express.static(path.join(__dirname, "../frontend")));
+
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/home.html"));
+  if (req.accepts("html")) {
+    res.sendFile(path.join(__dirname, "../frontend/home.html"));
+  } else {
+    res.status(404).json({ success: false, message: "API endpoint not found" });
+  }
 });
 
-// Error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: "Server Error" });
+  console.error("Unhandled Error Reached Final Handler:", err);
+
+  if (req.originalUrl.startsWith("/api")) {
+    res.status(err.status || 500).json({
+      success: false,
+      message: err.message || "Internal Server Error",
+    });
+  } else {
+    res.status(err.status || 500).send("Server Error");
+  }
 });
 
 const PORT = process.env.PORT || 5000;

@@ -23,7 +23,6 @@ const verificationQuestionSchema = new mongoose.Schema({
   ],
 });
 
-// Change this line at the end of your file
 module.exports =
   mongoose.models.VerificationQuestion ||
   mongoose.model("VerificationQuestion", verificationQuestionSchema);
