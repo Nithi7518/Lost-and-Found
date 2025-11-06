@@ -17,7 +17,7 @@ exports.createItem = async (req, res) => {
       location,
       type,
       user: req.user.id,
-      image: req.file ? req.file.filename : null,
+      image: req.file ? req.file.key : null,
     };
 
     const newItem = new Item(newItemData);
