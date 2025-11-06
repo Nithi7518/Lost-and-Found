@@ -1,39 +1,41 @@
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const aws = require("aws-sdk");
+const multerS3 = require("multer-s3");
 
-const publicUploadDir = path.join(__dirname, "../../frontend/public/uploads");
-
-if (!fs.existsSync(publicUploadDir)) {
-  fs.mkdirSync(publicUploadDir, { recursive: true });
-  console.log(`Created directory: ${publicUploadDir}`);
-} else {
-  console.log(`Directory already exists: ${publicUploadDir}`);
-}
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, publicUploadDir); 
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
+// You will get these values from AWS in the next steps
+aws.config.update({
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  region: process.env.AWS_REGION, // e.g., "us-east-1"
 });
 
-// Check file type (Allow only images)
+const s3 = new aws.S3();
+
+// Check file type
 const fileFilter = (req, file, cb) => {
   const filetypes = /jpeg|jpg|png|gif/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
 
   if (mimetype && extname) {
-    return cb(null, true); // Accept the file
+    return cb(null, true);
   } else {
-    cb(new Error("Only image files (jpeg, jpg, png, gif) are allowed!"), false); // Reject the file
+    cb(new Error("Only image files are allowed!"));
   }
 };
 
+// Initialize upload
 const upload = multer({
-  storage: storage,
+  storage: multerS3({
+    s3: s3,
+    bucket: process.env.S3_BUCKET_NAME, // You will set this environment variable later
+    acl: 'private', // Keep files private by default
+    key: function (req, file, cb) {
+      // Create a unique filename
+      cb(null, `${Date.now()}-${file.originalname}`);
+    },
+  }),
   limits: { fileSize: 5000000 }, // 5MB limit
   fileFilter: fileFilter,
 });
