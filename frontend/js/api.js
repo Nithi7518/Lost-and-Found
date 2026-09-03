@@ -1,6 +1,5 @@
 const API_URL = "http://localhost:5000/api";
 
-// Authentication functions
 const login = async (email, password) => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -47,13 +46,11 @@ const register = async (userData) => {
   }
 };
 
-// Item functions
 const createItem = async (itemData) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Not authenticated");
 
-    // If itemData contains a file, use FormData
     let requestOptions;
     if (itemData.image instanceof File) {
       const formData = new FormData();
@@ -95,7 +92,6 @@ const createItem = async (itemData) => {
 
 const getItems = async (searchParams = {}) => {
   try {
-    // Convert params object to query string
     const queryString = Object.entries(searchParams)
       .filter(([_, value]) => value)
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
@@ -115,7 +111,6 @@ const getItems = async (searchParams = {}) => {
   }
 };
 
-// Auth helper functions
 const isAuthenticated = () => {
   return localStorage.getItem("token") !== null;
 };

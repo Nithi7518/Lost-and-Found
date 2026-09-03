@@ -499,12 +499,13 @@ main {
 .auth-form a:hover {
   text-decoration: underline;
 }
-
-input:not(:focus):invalid {
+.auth-form input:not(:focus):invalid {
+  /* Added .auth-form */
   border: 1px solid red;
 }
 
-input:not(:focus):valid {
+.auth-form input:not(:focus):valid {
+  /* Added .auth-form */
   border: 1px solid green;
 }
 
@@ -746,7 +747,7 @@ input[type="file"]:not(:focus):valid {
 
 .tab-btn.active {
   color: #007bff;
-  border-bottom-color: #007bff;
+  border-bottom-color: transparent;
 }
 
 .tab-btn.active::after {
@@ -756,24 +757,38 @@ input[type="file"]:not(:focus):valid {
   left: 0;
   width: 100%;
   height: 3px;
-  background-color: #007bff;
 }
 
 .items-list {
+  /* Add these properties */
+  display: flex; /* Enables Flexbox layout for children */
+  flex-wrap: wrap; /* Allows items to move to the next line if no space */
+  gap: 20px; /* Creates space BETWEEN the items (adjust value as needed) */
+
+  /* Keep or add existing properties */
   min-height: 200px;
+  /* Remove any fixed width: 100% if you have one here */
 }
 
 .item-row {
+  /* --- Add these flex item properties --- */
+  flex-basis: 300px; /* Sets the initial preferred width for each card */
+  /* Multiple cards will fit side-by-side if space allows */
+  flex-grow: 1; /* Allows cards to grow and fill empty space on the line */
+  /* This helps make rows look more even */
+
+  /* --- Keep your existing styles for how content INSIDE the row looks --- */
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: center; /* Or 'flex-start' if you prefer top alignment */
   padding: 15px;
-  margin-bottom: 10px;
   background-color: hsla(0, 0%, 100%, 0.5);
   border-radius: 5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
 
+  /* --- IMPORTANT: Remove margin-bottom if you added 'gap' to .items-list --- */
+  /* margin-bottom: 10px; */ /* Comment out or remove this */
+}
 .item-info h4 {
   margin-top: 0;
   margin-bottom: 10px;
@@ -957,4 +972,36 @@ input[type="file"]:not(:focus):valid {
 .reject-btn {
   background-color: #dc3545;
   color: white;
+}
+
+/* Modal Styles in account */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: auto;
+  padding: 20px;
+  width: 80%;
+  max-width: 600px;
+  border-radius: 8px;
+}
+
+.modal-scrollable {
+  max-height: calc(100vh - 200px); /* Adjust height based on modal size */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.close {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
 }
